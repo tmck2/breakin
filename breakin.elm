@@ -38,13 +38,13 @@ type alias Model =
 color i =
     case i % 3 of
         0 ->
-            "red"
+            "rgb(92, 199, 42)"
 
         1 ->
-            "blue"
+            "rgb(35, 139, 214)"
 
         2 ->
-            "green"
+            "rgb(205, 112, 2)"
 
         _ ->
             "black"
@@ -58,7 +58,7 @@ createRow seed rowNum len =
 
 
 createBrick rowNum colNum color =
-    { id = (rowNum + 1) * colNum
+    { id = (rowNum + 1) * (colNum + 1)
     , pos = ( 5 + 5 * colNum + colNum * 40, 20 * rowNum + 5 + 5 * rowNum )
     , size = ( 40, 20 )
     , color = color
