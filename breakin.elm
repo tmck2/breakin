@@ -83,11 +83,11 @@ createBrick rowNum colNum color =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { paddle = { id = Paddle, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "DarkGray" }
+    ( { paddle = { id = Paddle, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "rgb(57, 60, 68)" }
       , bricks =
             [0..5]
                 |> List.concatMap (\i -> createRow i i 10)
-      , ball = { id = Ball, pos = ( 160, 200 ), size = ( 20, 20 ), vel = ( 4, -4 ), color = "Purple" }
+      , ball = { id = Ball, pos = ( 160, 200 ), size = ( 20, 20 ), vel = ( 4, -4 ), color = "rgb(57, 60, 68)" }
       }
     , Cmd.none
     )
@@ -111,7 +111,38 @@ updateEntity entity =
         ( x, y ) =
             entity.pos
     in
-        { entity | pos = ( x + vx, y + vx ) }
+        { entity | pos = ( x + vx, y + vy ) }
+
+
+checkCollision entity =
+    let
+        ( vx, vy ) =
+            entity.vel
+
+        ( x, y ) =
+            entity.pos
+    in
+        case entity.id of
+            Paddle ->
+                if x < 0 then
+                    { entity | pos = ( 0, y ) }
+                else if x > 330 then
+                    { entity | pos = ( 330, y ) }
+                else
+                    entity
+
+            Ball ->
+                if y < 0 then
+                    { entity | pos = ( x, 0 ), vel = ( vx, -vy ) }
+                else if x > 430 then
+                    { entity | pos = ( 430, y ), vel = ( -vx, vy ) }
+                else if x < 0 then
+                    { entity | pos = ( 0, y ), vel = ( -vx, vy ) }
+                else
+                    entity
+
+            _ ->
+                entity
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -138,10 +169,10 @@ update msg model =
             Update time ->
                 let
                     updatedPaddle =
-                        updateEntity paddle
+                        paddle |> updateEntity |> checkCollision
 
                     updatedBall =
-                        updateEntity ball
+                        ball |> updateEntity |> checkCollision
                 in
                     ( { model
                         | paddle = updatedPaddle
