@@ -27,8 +27,14 @@ main =
 -- MODEL
 
 
+type EntityId
+    = Brick Int
+    | Paddle
+    | Ball
+
+
 type alias Entity =
-    { id : Int
+    { id : EntityId
     , pos : ( Int, Int )
     , size : ( Int, Int )
     , vel : ( Int, Int )
@@ -39,6 +45,7 @@ type alias Entity =
 type alias Model =
     { paddle : Entity
     , bricks : List Entity
+    , ball : Entity
     }
 
 
@@ -66,7 +73,7 @@ createRow seed rowNum len =
 
 createBrick : Int -> Int -> String -> Entity
 createBrick rowNum colNum color =
-    { id = (rowNum + 1) * (colNum + 1)
+    { id = Brick <| (rowNum + 1) * (colNum + 1)
     , pos = ( 5 + 5 * colNum + colNum * 40, 20 * rowNum + 5 + 5 * rowNum )
     , size = ( 40, 20 )
     , vel = ( 0, 0 )
@@ -76,10 +83,11 @@ createBrick rowNum colNum color =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { paddle = { id = 1, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "DarkGray" }
+    ( { paddle = { id = Paddle, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "DarkGray" }
       , bricks =
             [0..5]
                 |> List.concatMap (\i -> createRow i i 10)
+      , ball = { id = Ball, pos = ( 160, 200 ), size = ( 20, 20 ), vel = ( 4, -4 ), color = "Purple" }
       }
     , Cmd.none
     )
@@ -95,14 +103,28 @@ type Msg
     | Update Time
 
 
+updateEntity entity =
+    let
+        ( vx, vy ) =
+            entity.vel
+
+        ( x, y ) =
+            entity.pos
+    in
+        { entity | pos = ( x + vx, y + vx ) }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        KeyDown keyCode ->
-            let
-                paddle =
-                    model.paddle
-            in
+    let
+        paddle =
+            model.paddle
+
+        ball =
+            model.ball
+    in
+        case msg of
+            KeyDown keyCode ->
                 if keyCode == 37 then
                     ( { model | paddle = { paddle | vel = ( -4, 0 ) } }, Cmd.none )
                 else if keyCode == 39 then
@@ -110,25 +132,23 @@ update msg model =
                 else
                     ( model, Cmd.none )
 
-        KeyUp keyCode ->
-            let
-                paddle =
-                    model.paddle
-            in
+            KeyUp keyCode ->
                 ( { model | paddle = { paddle | vel = ( 0, 0 ) } }, Cmd.none )
 
-        Update time ->
-            let
-                paddle =
-                    model.paddle
+            Update time ->
+                let
+                    updatedPaddle =
+                        updateEntity paddle
 
-                ( vx, vy ) =
-                    paddle.vel
-
-                ( x, y ) =
-                    paddle.pos
-            in
-                ( { model | paddle = { paddle | pos = ( x + vx, y ) } }, Cmd.none )
+                    updatedBall =
+                        updateEntity ball
+                in
+                    ( { model
+                        | paddle = updatedPaddle
+                        , ball = updatedBall
+                      }
+                    , Cmd.none
+                    )
 
 
 subscriptions model =
@@ -191,4 +211,5 @@ view model =
             , text <| toString model
             ]
         , renderEntity model.paddle
+        , renderEntity model.ball
         ]
