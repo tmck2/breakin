@@ -29,7 +29,8 @@ main =
 
 
 type alias Model =
-    { paddle : Paddle
+    { lives : Int
+    , paddle : Paddle
     , bricks : List Entity
     , ball : Entity
     , state : State
@@ -137,6 +138,7 @@ init =
             , color = "rgb(57, 60, 68)"
             }
       , state = Serving
+      , lives = 3
       }
     , Cmd.none
     )
@@ -211,98 +213,88 @@ handleCollisions model =
             model
 
 
-updatePosition entity =
-    { entity | x = entity.x + entity.vx, y = entity.y + entity.vy }
-
-
-inPlay : Msg -> Model -> ( Model, Cmd Msg )
-inPlay msg model =
+updatePaddle : Msg -> Model -> Model
+updatePaddle msg model =
     let
         paddle =
             model.paddle
-
-        ball =
-            model.ball
     in
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    ( { model | paddle = { paddle | vx = -4 } }, Cmd.none )
+                    { model | paddle = { paddle | vx = -4 } }
                 else if keyCode == 39 then
-                    ( { model | paddle = { paddle | vx = 4 } }, Cmd.none )
+                    { model | paddle = { paddle | vx = 4 } }
                 else
-                    ( model, Cmd.none )
+                    model
 
             KeyUp keyCode ->
-                ( { model | paddle = { paddle | vx = 0 } }, Cmd.none )
+                { model | paddle = { paddle | vx = 0 } }
 
             Update time ->
-                let
-                    updatedPaddle =
-                        paddle |> updatePosition |> checkBounds
-
-                    updatedBall =
-                        ball
-                            |> updatePosition
-                            |> checkBounds
-                in
-                    ( handleCollisions
-                        { model
-                            | paddle = updatedPaddle
-                            , ball = updatedBall
-                            , state =
-                                if ball.y > 450 then
-                                    Serving
-                                else
-                                    InPlay
-                        }
-                    , Cmd.none
-                    )
+                { model | paddle = checkBounds { paddle | x = paddle.x + paddle.vx } }
 
 
-serving : Msg -> Model -> ( Model, Cmd Msg )
-serving msg model =
+updateBall : Msg -> Model -> Model
+updateBall msg model =
     let
-        paddle =
-            model.paddle
-
         ball =
             model.ball
+
+        paddle =
+            model.paddle
     in
         case msg of
-            KeyDown keyCode ->
-                if keyCode == 37 then
-                    ( { model | paddle = { paddle | vx = -4 } }, Cmd.none )
-                else if keyCode == 39 then
-                    ( { model | paddle = { paddle | vx = 4 } }, Cmd.none )
-                else
-                    ( model, Cmd.none )
-
             KeyUp keyCode ->
                 if keyCode == 17 then
-                    ( { model | state = InPlay, ball = { ball | vx = 3, vy = -3 } }, Cmd.none )
+                    { model | state = InPlay, ball = { ball | vx = 4, vy = -4 } }
                 else
-                    ( { model | paddle = { paddle | vx = 0 } }, Cmd.none )
+                    { model | paddle = { paddle | vx = 0 } }
 
             Update time ->
-                let
-                    updatedPaddle =
-                        paddle |> updatePosition |> checkBounds
+                case model.state of
+                    Serving ->
+                        { model | ball = { ball | x = paddle.x + paddle.sx // 2 - ball.sx // 2, y = paddle.y - ball.sy } }
 
-                    updatedBall =
-                        { ball | x = paddle.x + paddle.sx // 2 - ball.sx // 2, y = paddle.y - ball.sy }
-                in
-                    ( { model | paddle = updatedPaddle, ball = updatedBall }, Cmd.none )
+                    InPlay ->
+                        { model
+                            | ball =
+                                model.ball
+                                    |> (\entity -> { entity | x = entity.x + entity.vx, y = entity.y + entity.vy })
+                                    |> checkBounds
+                        }
+
+            _ ->
+                model
+
+
+updateAlive : Model -> Model
+updateAlive model =
+    let
+        ball =
+            model.ball
+
+        state =
+            model.state
+    in
+        { model
+            | state =
+                if ball.y > 450 then
+                    Serving
+                else
+                    state
+        }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model.state of
-        InPlay ->
-            inPlay msg model
-
-        Serving ->
-            serving msg model
+    ( model
+        |> (updatePaddle msg)
+        |> (updateBall msg)
+        |> handleCollisions
+        |> updateAlive
+    , Cmd.none
+    )
 
 
 subscriptions model =
@@ -354,9 +346,10 @@ view model =
                 , "top" => "500px"
                 ]
             ]
-            [ hr [] []
-            , text <| toString model
-            ]
+            []
+          --[ hr [] []
+          --, text <| toString model
+          --]
         , renderEntity model.paddle
         , renderEntity model.ball
         ]
