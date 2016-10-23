@@ -51,7 +51,7 @@ color i =
 
 
 createRow seed rowNum len =
-    if len < 0 then
+    if len == 0 then
         []
     else
         (createBrick rowNum (len - 1) (color seed)) :: (createRow (rowNum * seed + len) rowNum (len - 1))
