@@ -4,7 +4,7 @@ import Html exposing (Html, button, div, text, hr)
 import Html.App as App
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import Keyboard exposing (..)
+import Keyboard
 import AnimationFrame
 import Time exposing (Time)
 import Array
@@ -116,30 +116,37 @@ init =
     )
 
 
-overlapping : Entity -> Entity -> Bool
-overlapping entity1 entity2 =
-    False
-
-
 
 -- UPDATE
 
 
 type Msg
-    = KeyUp KeyCode
-    | KeyDown KeyCode
+    = KeyUp Keyboard.KeyCode
+    | KeyDown Keyboard.KeyCode
     | Update Time
 
 
-checkCollision entity =
+colliding : Entity -> Entity -> Bool
+colliding entity1 entity2 =
+    entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy)
+
+
+handleCollision entity ball =
     case entity.id of
         Paddle ->
-            if entity.x < 0 then
-                { entity | x = 0 }
-            else if entity.x > 330 then
-                { entity | x = 330 }
+            if colliding ball entity then
+                { ball | vy = -ball.vy }
             else
-                entity
+                ball
+
+        _ ->
+            ball
+
+
+checkBounds entity =
+    case entity.id of
+        Paddle ->
+            { entity | x = min (max entity.x 0) 330 }
 
         Ball ->
             if entity.y <= 0 then
@@ -183,10 +190,13 @@ update msg model =
             Update time ->
                 let
                     updatedPaddle =
-                        paddle |> updatePosition |> checkCollision
+                        paddle |> updatePosition |> checkBounds
 
                     updatedBall =
-                        ball |> updatePosition |> checkCollision
+                        ball
+                            |> updatePosition
+                            |> checkBounds
+                            |> handleCollision updatedPaddle
                 in
                     ( { model
                         | paddle = updatedPaddle
@@ -198,8 +208,8 @@ update msg model =
 
 subscriptions model =
     Sub.batch
-        [ downs KeyDown
-        , ups KeyUp
+        [ Keyboard.downs KeyDown
+        , Keyboard.ups KeyUp
         , AnimationFrame.diffs Update
         ]
 
