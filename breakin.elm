@@ -28,6 +28,19 @@ main =
 -- MODEL
 
 
+type alias Model =
+    { paddle : Paddle
+    , bricks : List Entity
+    , ball : Entity
+    , state : State
+    }
+
+
+type State
+    = Serving
+    | InPlay
+
+
 type EntityId
     = Brick Int
     | Paddle
@@ -48,13 +61,6 @@ type alias Entity =
 
 type alias Paddle =
     Entity
-
-
-type alias Model =
-    { paddle : Paddle
-    , bricks : List Entity
-    , ball : Entity
-    }
 
 
 color i =
@@ -122,14 +128,15 @@ init =
                 |> List.concatMap (\i -> createRow i i 10)
       , ball =
             { id = Ball
-            , x = 160
+            , x = 210
             , y = 380
             , sx = 20
             , sy = 20
-            , vx = 3
-            , vy = -3
+            , vx = 0
+            , vy = 0
             , color = "rgb(57, 60, 68)"
             }
+      , state = Serving
       }
     , Cmd.none
     )
@@ -166,7 +173,8 @@ checkBounds entity =
 
 colliding : Entity -> Entity -> Bool
 colliding entity1 entity2 =
-    entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy)
+    (entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy))
+        || (entity2.x > entity1.x && entity2.x < (entity1.x + entity1.sx) && entity2.y > entity1.y && entity2.y < (entity1.y + entity1.sy))
 
 
 handleCollisions : Model -> Model
@@ -188,12 +196,17 @@ handleCollisions model =
         if not <| List.isEmpty brickCollisions then
             case List.head brickCollisions of
                 Just brick ->
-                    { model | bricks = removeBrick brick bricks, ball = { ball | vy = -ball.vy } }
+                    { model
+                        | bricks = removeBrick brick bricks
+                        , ball = { ball | vy = -ball.vy }
+                    }
 
                 Nothing ->
                     model
         else if colliding model.ball model.paddle then
-            { model | ball = { ball | vy = -ball.vy } }
+            { model
+                | ball = { ball | vy = -ball.vy, y = paddle.y - ball.sy }
+            }
         else
             model
 
@@ -202,8 +215,8 @@ updatePosition entity =
     { entity | x = entity.x + entity.vx, y = entity.y + entity.vy }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+inPlay : Msg -> Model -> ( Model, Cmd Msg )
+inPlay msg model =
     let
         paddle =
             model.paddle
@@ -237,9 +250,59 @@ update msg model =
                         { model
                             | paddle = updatedPaddle
                             , ball = updatedBall
+                            , state =
+                                if ball.y > 450 then
+                                    Serving
+                                else
+                                    InPlay
                         }
                     , Cmd.none
                     )
+
+
+serving : Msg -> Model -> ( Model, Cmd Msg )
+serving msg model =
+    let
+        paddle =
+            model.paddle
+
+        ball =
+            model.ball
+    in
+        case msg of
+            KeyDown keyCode ->
+                if keyCode == 37 then
+                    ( { model | paddle = { paddle | vx = -4 } }, Cmd.none )
+                else if keyCode == 39 then
+                    ( { model | paddle = { paddle | vx = 4 } }, Cmd.none )
+                else
+                    ( model, Cmd.none )
+
+            KeyUp keyCode ->
+                if keyCode == 17 then
+                    ( { model | state = InPlay, ball = { ball | vx = 3, vy = -3 } }, Cmd.none )
+                else
+                    ( { model | paddle = { paddle | vx = 0 } }, Cmd.none )
+
+            Update time ->
+                let
+                    updatedPaddle =
+                        paddle |> updatePosition |> checkBounds
+
+                    updatedBall =
+                        { ball | x = paddle.x + paddle.sx // 2 - ball.sx // 2, y = paddle.y - ball.sy }
+                in
+                    ( { model | paddle = updatedPaddle, ball = updatedBall }, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case model.state of
+        InPlay ->
+            inPlay msg model
+
+        Serving ->
+            serving msg model
 
 
 subscriptions model =
