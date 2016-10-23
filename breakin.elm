@@ -46,8 +46,12 @@ type alias Entity =
     }
 
 
+type alias Paddle =
+    Entity
+
+
 type alias Model =
-    { paddle : Entity
+    { paddle : Paddle
     , bricks : List Entity
     , ball : Entity
     }
@@ -75,7 +79,7 @@ createRow seed rowNum len =
 
 createBrick : Int -> Int -> String -> Entity
 createBrick rowNum colNum color =
-    { id = Brick <| (rowNum + 1) * (colNum + 1)
+    { id = Brick (rowNum * 10 + colNum)
     , x = 5 + 5 * colNum + colNum * 40
     , y = 20 * rowNum + 5 + 5 * rowNum
     , sx = 40
@@ -84,6 +88,21 @@ createBrick rowNum colNum color =
     , vy = 0
     , color = color
     }
+
+
+removeBrick : Entity -> List Entity -> List Entity
+removeBrick entity bricks =
+    let
+        id =
+            case entity.id of
+                Brick id ->
+                    id
+
+                _ ->
+                    -1
+    in
+        bricks
+            |> List.filter (\brick -> brick.id /= Brick id)
 
 
 init : ( Model, Cmd Msg )
@@ -104,11 +123,11 @@ init =
       , ball =
             { id = Ball
             , x = 160
-            , y = 200
+            , y = 380
             , sx = 20
             , sy = 20
-            , vx = 4
-            , vy = -4
+            , vx = 3
+            , vy = -3
             , color = "rgb(57, 60, 68)"
             }
       }
@@ -124,23 +143,6 @@ type Msg
     = KeyUp Keyboard.KeyCode
     | KeyDown Keyboard.KeyCode
     | Update Time
-
-
-colliding : Entity -> Entity -> Bool
-colliding entity1 entity2 =
-    entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy)
-
-
-handleCollision entity ball =
-    case entity.id of
-        Paddle ->
-            if colliding ball entity then
-                { ball | vy = -ball.vy }
-            else
-                ball
-
-        _ ->
-            ball
 
 
 checkBounds entity =
@@ -160,6 +162,40 @@ checkBounds entity =
 
         _ ->
             entity
+
+
+colliding : Entity -> Entity -> Bool
+colliding entity1 entity2 =
+    entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy)
+
+
+handleCollisions : Model -> Model
+handleCollisions model =
+    let
+        ball =
+            model.ball
+
+        paddle =
+            model.paddle
+
+        bricks =
+            model.bricks
+
+        brickCollisions =
+            bricks
+                |> List.filter (colliding ball)
+    in
+        if not <| List.isEmpty brickCollisions then
+            case List.head brickCollisions of
+                Just brick ->
+                    { model | bricks = removeBrick brick bricks, ball = { ball | vy = -ball.vy } }
+
+                Nothing ->
+                    model
+        else if colliding model.ball model.paddle then
+            { model | ball = { ball | vy = -ball.vy } }
+        else
+            model
 
 
 updatePosition entity =
@@ -196,12 +232,12 @@ update msg model =
                         ball
                             |> updatePosition
                             |> checkBounds
-                            |> handleCollision updatedPaddle
                 in
-                    ( { model
-                        | paddle = updatedPaddle
-                        , ball = updatedBall
-                      }
+                    ( handleCollisions
+                        { model
+                            | paddle = updatedPaddle
+                            , ball = updatedBall
+                        }
                     , Cmd.none
                     )
 
