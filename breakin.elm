@@ -7,6 +7,7 @@ import Html.Events exposing (onClick)
 import Keyboard exposing (..)
 import AnimationFrame
 import Time exposing (Time)
+import Array
 
 
 (=>) : a -> b -> ( a, b )
@@ -35,9 +36,12 @@ type EntityId
 
 type alias Entity =
     { id : EntityId
-    , pos : ( Int, Int )
-    , size : ( Int, Int )
-    , vel : ( Int, Int )
+    , x : Int
+    , y : Int
+    , sx : Int
+    , sy : Int
+    , vx : Int
+    , vy : Int
     , color : String
     }
 
@@ -50,18 +54,16 @@ type alias Model =
 
 
 color i =
-    case i % 3 of
-        0 ->
-            "rgb(92, 199, 42)"
+    let
+        colors =
+            Array.fromList [ "rgb(92, 199, 42)", "rgb(35, 139, 214)", "rgb(205, 112, 2)" ]
+    in
+        case Array.get (i % (Array.length colors)) colors of
+            Just c ->
+                c
 
-        1 ->
-            "rgb(35, 139, 214)"
-
-        2 ->
-            "rgb(205, 112, 2)"
-
-        _ ->
-            "black"
+            Nothing ->
+                "rgb(196, 109, 204)"
 
 
 createRow seed rowNum len =
@@ -74,23 +76,49 @@ createRow seed rowNum len =
 createBrick : Int -> Int -> String -> Entity
 createBrick rowNum colNum color =
     { id = Brick <| (rowNum + 1) * (colNum + 1)
-    , pos = ( 5 + 5 * colNum + colNum * 40, 20 * rowNum + 5 + 5 * rowNum )
-    , size = ( 40, 20 )
-    , vel = ( 0, 0 )
+    , x = 5 + 5 * colNum + colNum * 40
+    , y = 20 * rowNum + 5 + 5 * rowNum
+    , sx = 40
+    , sy = 20
+    , vx = 0
+    , vy = 0
     , color = color
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { paddle = { id = Paddle, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "rgb(57, 60, 68)" }
+    ( { paddle =
+            { id = Paddle
+            , x = 160
+            , y = 400
+            , sx = 120
+            , sy = 20
+            , vx = 0
+            , vy = 0
+            , color = "rgb(57, 60, 68)"
+            }
       , bricks =
             [0..5]
                 |> List.concatMap (\i -> createRow i i 10)
-      , ball = { id = Ball, pos = ( 160, 200 ), size = ( 20, 20 ), vel = ( 4, -4 ), color = "rgb(57, 60, 68)" }
+      , ball =
+            { id = Ball
+            , x = 160
+            , y = 200
+            , sx = 20
+            , sy = 20
+            , vx = 4
+            , vy = -4
+            , color = "rgb(57, 60, 68)"
+            }
       }
     , Cmd.none
     )
+
+
+overlapping : Entity -> Entity -> Bool
+overlapping entity1 entity2 =
+    False
 
 
 
@@ -103,46 +131,32 @@ type Msg
     | Update Time
 
 
-updateEntity entity =
-    let
-        ( vx, vy ) =
-            entity.vel
-
-        ( x, y ) =
-            entity.pos
-    in
-        { entity | pos = ( x + vx, y + vy ) }
-
-
 checkCollision entity =
-    let
-        ( vx, vy ) =
-            entity.vel
-
-        ( x, y ) =
-            entity.pos
-    in
-        case entity.id of
-            Paddle ->
-                if x < 0 then
-                    { entity | pos = ( 0, y ) }
-                else if x > 330 then
-                    { entity | pos = ( 330, y ) }
-                else
-                    entity
-
-            Ball ->
-                if y < 0 then
-                    { entity | pos = ( x, 0 ), vel = ( vx, -vy ) }
-                else if x > 430 then
-                    { entity | pos = ( 430, y ), vel = ( -vx, vy ) }
-                else if x < 0 then
-                    { entity | pos = ( 0, y ), vel = ( -vx, vy ) }
-                else
-                    entity
-
-            _ ->
+    case entity.id of
+        Paddle ->
+            if entity.x < 0 then
+                { entity | x = 0 }
+            else if entity.x > 330 then
+                { entity | x = 330 }
+            else
                 entity
+
+        Ball ->
+            if entity.y <= 0 then
+                { entity | y = 0, vy = -entity.vy }
+            else if entity.x >= 430 then
+                { entity | x = 430, vx = -entity.vx }
+            else if entity.x <= 0 then
+                { entity | x = 0, vx = -entity.vx }
+            else
+                entity
+
+        _ ->
+            entity
+
+
+updatePosition entity =
+    { entity | x = entity.x + entity.vx, y = entity.y + entity.vy }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -157,22 +171,22 @@ update msg model =
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    ( { model | paddle = { paddle | vel = ( -4, 0 ) } }, Cmd.none )
+                    ( { model | paddle = { paddle | vx = -4 } }, Cmd.none )
                 else if keyCode == 39 then
-                    ( { model | paddle = { paddle | vel = ( 4, 0 ) } }, Cmd.none )
+                    ( { model | paddle = { paddle | vx = 4 } }, Cmd.none )
                 else
                     ( model, Cmd.none )
 
             KeyUp keyCode ->
-                ( { model | paddle = { paddle | vel = ( 0, 0 ) } }, Cmd.none )
+                ( { model | paddle = { paddle | vx = 0 } }, Cmd.none )
 
             Update time ->
                 let
                     updatedPaddle =
-                        paddle |> updateEntity |> checkCollision
+                        paddle |> updatePosition |> checkCollision
 
                     updatedBall =
-                        ball |> updateEntity |> checkCollision
+                        ball |> updatePosition |> checkCollision
                 in
                     ( { model
                         | paddle = updatedPaddle
@@ -201,25 +215,18 @@ px val =
 
 renderEntity : Entity -> Html a
 renderEntity entity =
-    let
-        ( x, y ) =
-            entity.pos
-
-        ( sx, sy ) =
-            entity.size
-    in
-        div
-            [ style
-                [ "position" => "absolute"
-                , "left" => px x
-                , "top" => px y
-                , "width" => px sx
-                , "height" => px sy
-                , "background-color" => entity.color
-                , "display" => "inline-block"
-                ]
+    div
+        [ style
+            [ "position" => "absolute"
+            , "left" => px entity.x
+            , "top" => px entity.y
+            , "width" => px entity.sx
+            , "height" => px entity.sy
+            , "background-color" => entity.color
+            , "display" => "inline-block"
             ]
-            []
+        ]
+        []
 
 
 view : Model -> Html Msg
