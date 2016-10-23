@@ -4,6 +4,9 @@ import Html exposing (Html, button, div, text, hr)
 import Html.App as App
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import Keyboard exposing (..)
+import AnimationFrame
+import Time exposing (Time)
 
 
 (=>) : a -> b -> ( a, b )
@@ -12,10 +15,11 @@ import Html.Events exposing (onClick)
 
 
 main =
-    App.beginnerProgram
-        { model = model
+    App.program
+        { init = init
         , view = view
         , update = update
+        , subscriptions = subscriptions
         }
 
 
@@ -23,24 +27,18 @@ main =
 -- MODEL
 
 
-type alias Paddle =
-    { pos : ( Int, Int )
-    , size : ( Int, Int )
-    , color : String
-    }
-
-
-type alias Brick =
+type alias Entity =
     { id : Int
     , pos : ( Int, Int )
     , size : ( Int, Int )
+    , vel : ( Int, Int )
     , color : String
     }
 
 
 type alias Model =
-    { paddle : Paddle
-    , bricks : List Brick
+    { paddle : Entity
+    , bricks : List Entity
     }
 
 
@@ -66,21 +64,25 @@ createRow seed rowNum len =
         (createBrick rowNum (len - 1) (color seed)) :: (createRow (rowNum * seed + len) rowNum (len - 1))
 
 
+createBrick : Int -> Int -> String -> Entity
 createBrick rowNum colNum color =
     { id = (rowNum + 1) * (colNum + 1)
     , pos = ( 5 + 5 * colNum + colNum * 40, 20 * rowNum + 5 + 5 * rowNum )
     , size = ( 40, 20 )
+    , vel = ( 0, 0 )
     , color = color
     }
 
 
-model : Model
-model =
-    { paddle = { pos = ( 160, 400 ), size = ( 120, 20 ), color = "DarkGray" }
-    , bricks =
-        [0..5]
-            |> List.concatMap (\i -> createRow i i 10)
-    }
+init : ( Model, Cmd Msg )
+init =
+    ( { paddle = { id = 1, pos = ( 160, 400 ), size = ( 120, 20 ), vel = ( 0, 0 ), color = "DarkGray" }
+      , bricks =
+            [0..5]
+                |> List.concatMap (\i -> createRow i i 10)
+      }
+    , Cmd.none
+    )
 
 
 
@@ -88,13 +90,53 @@ model =
 
 
 type Msg
-    = Increment
-    | Decrement
+    = KeyUp KeyCode
+    | KeyDown KeyCode
+    | Update Time
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    model
+    case msg of
+        KeyDown keyCode ->
+            let
+                paddle =
+                    model.paddle
+            in
+                if keyCode == 37 then
+                    ( { model | paddle = { paddle | vel = ( -4, 0 ) } }, Cmd.none )
+                else if keyCode == 39 then
+                    ( { model | paddle = { paddle | vel = ( 4, 0 ) } }, Cmd.none )
+                else
+                    ( model, Cmd.none )
+
+        KeyUp keyCode ->
+            let
+                paddle =
+                    model.paddle
+            in
+                ( { model | paddle = { paddle | vel = ( 0, 0 ) } }, Cmd.none )
+
+        Update time ->
+            let
+                paddle =
+                    model.paddle
+
+                ( vx, vy ) =
+                    paddle.vel
+
+                ( x, y ) =
+                    paddle.pos
+            in
+                ( { model | paddle = { paddle | pos = ( x + vx, y ) } }, Cmd.none )
+
+
+subscriptions model =
+    Sub.batch
+        [ downs KeyDown
+        , ups KeyUp
+        , AnimationFrame.diffs Update
+        ]
 
 
 
@@ -106,14 +148,14 @@ px val =
     toString val ++ "px"
 
 
-renderPaddle : Paddle -> Html a
-renderPaddle paddle =
+renderEntity : Entity -> Html a
+renderEntity entity =
     let
         ( x, y ) =
-            paddle.pos
+            entity.pos
 
         ( sx, sy ) =
-            paddle.size
+            entity.size
     in
         div
             [ style
@@ -122,30 +164,7 @@ renderPaddle paddle =
                 , "top" => px y
                 , "width" => px sx
                 , "height" => px sy
-                , "background-color" => paddle.color
-                , "display" => "inline-block"
-                ]
-            ]
-            []
-
-
-renderBrick : Brick -> Html a
-renderBrick brick =
-    let
-        ( x, y ) =
-            brick.pos
-
-        ( sx, sy ) =
-            brick.size
-    in
-        div
-            [ style
-                [ "position" => "absolute"
-                , "left" => px x
-                , "top" => px y
-                , "width" => px sx
-                , "height" => px sy
-                , "background-color" => brick.color
+                , "background-color" => entity.color
                 , "display" => "inline-block"
                 ]
             ]
@@ -161,7 +180,7 @@ view model =
             , "height" => "100%"
             ]
         ]
-        [ div [] (List.map renderBrick model.bricks)
+        [ div [] (List.map renderEntity model.bricks)
         , div
             [ style
                 [ "position" => "absolute"
@@ -171,5 +190,5 @@ view model =
             [ hr [] []
             , text <| toString model
             ]
-        , renderPaddle model.paddle
+        , renderEntity model.paddle
         ]
