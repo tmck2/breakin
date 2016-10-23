@@ -122,10 +122,10 @@ init =
             , sy = 20
             , vx = 0
             , vy = 0
-            , color = "rgb(57, 60, 68)"
+            , color = "#ddd"
             }
       , bricks =
-            [0..5]
+            [2..7]
                 |> List.concatMap (\i -> createRow i i 10)
       , ball =
             { id = Ball
@@ -135,7 +135,7 @@ init =
             , sy = 20
             , vx = 0
             , vy = 0
-            , color = "rgb(57, 60, 68)"
+            , color = "#bbb"
             }
       , state = Serving
       , lives = 3
@@ -339,17 +339,27 @@ view model =
             , "height" => "100%"
             ]
         ]
-        [ div [] (List.map renderEntity model.bricks)
-        , div
+        [ div
             [ style
-                [ "position" => "absolute"
-                , "top" => "500px"
+                [ "position" => "relative"
+                , "width" => "455px"
+                , "height" => "500px"
+                , "margin" => "auto"
+                , "background-color" => "rgb(47, 36, 55)"
                 ]
             ]
-            []
-          --[ hr [] []
-          --, text <| toString model
-          --]
-        , renderEntity model.paddle
-        , renderEntity model.ball
+            [ div [] (List.map renderEntity model.bricks)
+            , div
+                [ style
+                    [ "position" => "absolute"
+                    , "top" => "500px"
+                    ]
+                ]
+                []
+              --[ hr [] []
+              --, text <| toString model
+              --]
+            , renderEntity model.paddle
+            , renderEntity model.ball
+            ]
         ]
