@@ -23,6 +23,13 @@ main =
 -- MODEL
 
 
+type alias Paddle =
+    { pos : ( Int, Int )
+    , size : ( Int, Int )
+    , color : String
+    }
+
+
 type alias Brick =
     { id : Int
     , pos : ( Int, Int )
@@ -32,7 +39,9 @@ type alias Brick =
 
 
 type alias Model =
-    { bricks : List Brick }
+    { paddle : Paddle
+    , bricks : List Brick
+    }
 
 
 color i =
@@ -67,7 +76,8 @@ createBrick rowNum colNum color =
 
 model : Model
 model =
-    { bricks =
+    { paddle = { pos = ( 160, 400 ), size = ( 120, 20 ), color = "DarkGray" }
+    , bricks =
         [0..5]
             |> List.concatMap (\i -> createRow i i 10)
     }
@@ -91,20 +101,55 @@ update msg model =
 -- VIEW
 
 
-renderBrick : Brick -> Html Msg
-renderBrick brick =
-    div
-        [ style
-            [ "position" => "absolute"
-            , "left" => (toString (fst brick.pos) ++ "px")
-            , "top" => (toString (snd brick.pos) ++ "px")
-            , "width" => (toString (fst brick.size) ++ "px")
-            , "height" => (toString (snd brick.size) ++ "px")
-            , "background-color" => brick.color
-            , "display" => "inline-block"
+px : Int -> String
+px val =
+    toString val ++ "px"
+
+
+renderPaddle : Paddle -> Html a
+renderPaddle paddle =
+    let
+        ( x, y ) =
+            paddle.pos
+
+        ( sx, sy ) =
+            paddle.size
+    in
+        div
+            [ style
+                [ "position" => "absolute"
+                , "left" => px x
+                , "top" => px y
+                , "width" => px sx
+                , "height" => px sy
+                , "background-color" => paddle.color
+                , "display" => "inline-block"
+                ]
             ]
-        ]
-        []
+            []
+
+
+renderBrick : Brick -> Html a
+renderBrick brick =
+    let
+        ( x, y ) =
+            brick.pos
+
+        ( sx, sy ) =
+            brick.size
+    in
+        div
+            [ style
+                [ "position" => "absolute"
+                , "left" => px x
+                , "top" => px y
+                , "width" => px sx
+                , "height" => px sy
+                , "background-color" => brick.color
+                , "display" => "inline-block"
+                ]
+            ]
+            []
 
 
 view : Model -> Html Msg
@@ -120,10 +165,11 @@ view model =
         , div
             [ style
                 [ "position" => "absolute"
-                , "top" => "400px"
+                , "top" => "500px"
                 ]
             ]
             [ hr [] []
             , text <| toString model
             ]
+        , renderPaddle model.paddle
         ]
