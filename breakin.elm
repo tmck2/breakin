@@ -246,7 +246,7 @@ updateBall msg model =
     in
         case msg of
             KeyUp keyCode ->
-                if keyCode == 17 then
+                if keyCode == 17 && model.state == Serving then
                     { model | state = InPlay, ball = { ball | vx = 4, vy = -4 } }
                 else
                     { model | paddle = { paddle | vx = 0 } }
