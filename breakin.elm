@@ -173,10 +173,26 @@ checkBounds entity =
             entity
 
 
+ptInRectangle ( minx, miny, maxx, maxy ) ( x, y ) =
+    x >= minx && x <= maxx && y >= miny && y <= maxy
+
+
+boundingRect entity =
+    ( entity.x, entity.y, entity.x + entity.sx, entity.y + entity.sy )
+
+
+entityVerts e =
+    [ ( e.x, e.y )
+    , ( e.x + e.sx, e.y )
+    , ( e.x + e.sy, e.y + e.sy )
+    , ( e.x, e.y + e.sy )
+    ]
+
+
 colliding : Entity -> Entity -> Bool
-colliding entity1 entity2 =
-    (entity1.x > entity2.x && entity1.x < (entity2.x + entity2.sx) && entity1.y > entity2.y && entity1.y < (entity2.y + entity2.sy))
-        || (entity2.x > entity1.x && entity2.x < (entity1.x + entity1.sx) && entity2.y > entity1.y && entity2.y < (entity1.y + entity1.sy))
+colliding e1 e2 =
+    List.any (ptInRectangle (boundingRect e2)) (entityVerts e1)
+        || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
 
 
 handleCollisions : Model -> Model
