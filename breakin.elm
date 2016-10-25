@@ -120,7 +120,7 @@ init =
             { id = Paddle
             , x = 160
             , y = 400
-            , sx = 120
+            , sx = 100
             , sy = 20
             , vx = 0
             , vy = 0
@@ -159,7 +159,7 @@ type Msg
 checkBounds entity =
     case entity.id of
         Paddle ->
-            { entity | x = min (max entity.x 0) 330 }
+            { entity | x = min (max entity.x 0) (455 - entity.sx) }
 
         Ball ->
             if entity.y <= 0 then
@@ -176,7 +176,7 @@ checkBounds entity =
 
 
 ptInRectangle ( minx, miny, maxx, maxy ) ( x, y ) =
-    x >= minx && x <= maxx && y >= miny && y <= maxy
+    x > minx && x < maxx && y > miny && y < maxy
 
 
 boundingRect entity =
@@ -239,9 +239,29 @@ handleCollisions model =
                 Nothing ->
                     model
         else if colliding model.ball model.paddle then
-            { model
-                | ball = { ball | vx = ball.vx, vy = -ball.vy, y = paddle.y - ball.sy }
-            }
+            let
+                normalize ( x, y ) =
+                    let
+                        mag =
+                            sqrt (x * x + y * y)
+                    in
+                        ( x / mag, y / mag )
+
+                d =
+                    sin ((max ((ball.x + ball.sx / 2 - paddle.x) / paddle.sx) 0.0) * pi)
+
+                sign x =
+                    if x >= 0.0 then
+                        1.0
+                    else
+                        -1.0
+
+                ( vx, vy ) =
+                    normalize ( d * 1 + (1 - d) * 2, d * 2 + (1 - d) * 1 )
+            in
+                { model
+                    | ball = { ball | vx = 4 * (sign ball.vx) * vx, vy = -4 * (sign ball.vy) * vy, y = paddle.y - ball.sy }
+                }
         else
             model
 
