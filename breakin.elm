@@ -50,12 +50,12 @@ type EntityId
 
 type alias Entity =
     { id : EntityId
-    , x : Int
-    , y : Int
-    , sx : Int
-    , sy : Int
-    , vx : Int
-    , vy : Int
+    , x : Float
+    , y : Float
+    , sx : Float
+    , sy : Float
+    , vx : Float
+    , vy : Float
     , color : String
     }
 
@@ -64,6 +64,7 @@ type alias Paddle =
     Entity
 
 
+color : Int -> String
 color i =
     let
         colors =
@@ -77,6 +78,7 @@ color i =
                 "rgb(196, 109, 204)"
 
 
+createRow : Int -> Int -> Int -> List Entity
 createRow seed rowNum len =
     if len == 0 then
         []
@@ -87,12 +89,12 @@ createRow seed rowNum len =
 createBrick : Int -> Int -> String -> Entity
 createBrick rowNum colNum color =
     { id = Brick (rowNum * 10 + colNum)
-    , x = 5 + 5 * colNum + colNum * 40
-    , y = 20 * rowNum + 5 + 5 * rowNum
-    , sx = 40
-    , sy = 20
-    , vx = 0
-    , vy = 0
+    , x = toFloat <| 5 + 5 * colNum + colNum * 40
+    , y = toFloat <| 20 * rowNum + 5 + 5 * rowNum
+    , sx = toFloat 40
+    , sy = toFloat 20
+    , vx = toFloat 0
+    , vy = toFloat 0
     , color = color
     }
 
@@ -238,7 +240,7 @@ handleCollisions model =
                     model
         else if colliding model.ball model.paddle then
             { model
-                | ball = { ball | vy = -ball.vy, y = paddle.y - ball.sy }
+                | ball = { ball | vx = ball.vx, vy = -ball.vy, y = paddle.y - ball.sy }
             }
         else
             model
@@ -278,20 +280,31 @@ updateBall msg model =
         case msg of
             KeyUp keyCode ->
                 if keyCode == 17 && model.state == Serving then
-                    { model | state = InPlay, ball = { ball | vx = 3, vy = -3 } }
+                    { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }
                 else
-                    { model | paddle = { paddle | vx = 0 } }
+                    { model | paddle = { paddle | vx = toFloat 0 } }
 
             Update time ->
                 case model.state of
                     Serving ->
-                        { model | ball = { ball | x = paddle.x + paddle.sx // 2 - ball.sx // 2, y = paddle.y - ball.sy } }
+                        { model
+                            | ball =
+                                { ball
+                                    | x = paddle.x + paddle.sx / 2 - ball.sx / 2
+                                    , y = paddle.y - ball.sy
+                                }
+                        }
 
                     InPlay ->
                         { model
                             | ball =
                                 model.ball
-                                    |> (\entity -> { entity | x = entity.x + entity.vx, y = entity.y + entity.vy })
+                                    |> (\entity ->
+                                            { entity
+                                                | x = entity.x + entity.vx
+                                                , y = entity.y + entity.vy
+                                            }
+                                       )
                                     |> checkBounds
                         }
 
@@ -340,9 +353,9 @@ subscriptions model =
 -- VIEW
 
 
-px : Int -> String
+px : Float -> String
 px val =
-    toString val ++ "px"
+    toString (round val) ++ "px"
 
 
 renderEntity : Entity -> Html a
