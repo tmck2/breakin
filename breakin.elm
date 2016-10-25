@@ -30,6 +30,7 @@ main =
 
 type alias Model =
     { lives : Int
+    , score : Int
     , paddle : Paddle
     , bricks : List Entity
     , ball : Entity
@@ -141,6 +142,7 @@ init =
             }
       , state = Serving
       , lives = 3
+      , score = 0
       }
     , Cmd.none
     )
@@ -347,6 +349,11 @@ updateAlive model =
                     Serving
                 else
                     state
+            , lives =
+                if ball.y > 450 then
+                    model.lives - 1
+                else
+                    model.lives
         }
 
 
@@ -394,6 +401,38 @@ renderEntity entity =
         []
 
 
+renderLives : Int -> Html a
+renderLives num =
+    div
+        [ style
+            [ "position" => "absolute"
+            , "left" => "355px"
+            , "top" => "460px"
+            , "width" => "90px"
+            , "height" => "30px"
+            , "display" => "inline-block"
+            ]
+        ]
+        [ div [ style [] ]
+            (List.map
+                (\n ->
+                    div
+                        [ style
+                            [ "display" => "inline-block"
+                            , "top" => "15px"
+                            , "width" => "20px"
+                            , "height" => "20px"
+                            , "background-color" => "#bbb"
+                            , "margin" => "5px"
+                            ]
+                        ]
+                        []
+                )
+                [1..num]
+            )
+        ]
+
+
 view : Model -> Html Msg
 view model =
     div
@@ -425,5 +464,6 @@ view model =
               --]
             , renderEntity model.paddle
             , renderEntity model.ball
+            , renderLives model.lives
             ]
         ]
