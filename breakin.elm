@@ -210,13 +210,28 @@ handleCollisions model =
         brickCollisions =
             bricks
                 |> List.filter (colliding ball)
+
+        ( cx, cy ) =
+            ( ball.x + 10, ball.y + 10 )
     in
         if not <| List.isEmpty brickCollisions then
             case List.head brickCollisions of
                 Just brick ->
                     { model
                         | bricks = removeBrick brick bricks
-                        , ball = { ball | vy = -ball.vy }
+                        , ball =
+                            { ball
+                                | vx =
+                                    if cx <= brick.x || cx >= (brick.x + brick.sx) then
+                                        -ball.vx
+                                    else
+                                        ball.vx
+                                , vy =
+                                    if cy <= brick.y || cy >= (brick.y + brick.sy) then
+                                        -ball.vy
+                                    else
+                                        ball.vy
+                            }
                     }
 
                 Nothing ->
@@ -238,9 +253,9 @@ updatePaddle msg model =
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    { model | paddle = { paddle | vx = -4 } }
+                    { model | paddle = { paddle | vx = -3 } }
                 else if keyCode == 39 then
-                    { model | paddle = { paddle | vx = 4 } }
+                    { model | paddle = { paddle | vx = 3 } }
                 else
                     model
 
@@ -263,7 +278,7 @@ updateBall msg model =
         case msg of
             KeyUp keyCode ->
                 if keyCode == 17 && model.state == Serving then
-                    { model | state = InPlay, ball = { ball | vx = 4, vy = -4 } }
+                    { model | state = InPlay, ball = { ball | vx = 3, vy = -3 } }
                 else
                     { model | paddle = { paddle | vx = 0 } }
 
