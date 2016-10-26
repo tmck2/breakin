@@ -393,6 +393,7 @@ renderScore score =
             , "font-family" => "Arial Black"
             , "top" => "5px"
             , "left" => "10px"
+            , "font-family" => "Orbitron, sans-serif"
             , "font-size" => "xx-large"
             ]
         ]
