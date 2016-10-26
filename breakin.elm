@@ -230,6 +230,7 @@ handleCollisions model =
                                     else
                                         ball.vy
                             }
+                        , score = model.score + 1
                     }
 
                 Nothing ->
@@ -383,6 +384,21 @@ renderEntity entity =
         []
 
 
+renderScore : Int -> Html a
+renderScore score =
+    div
+        [ style
+            [ "color" => "white"
+            , "position" => "absolute"
+            , "font-family" => "Arial Black"
+            , "top" => "5px"
+            , "left" => "10px"
+            , "font-size" => "xx-large"
+            ]
+        ]
+        [ text (toString score) ]
+
+
 renderLives : Int -> Html a
 renderLives num =
     div
@@ -433,7 +449,8 @@ view model =
                 , "background-color" => "rgb(47, 36, 55)"
                 ]
             ]
-            [ div [] (List.map renderEntity model.bricks)
+            [ renderScore model.score
+            , div [] (List.map renderEntity model.bricks)
             , div
                 [ style
                     [ "position" => "absolute"
