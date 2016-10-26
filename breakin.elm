@@ -8,6 +8,7 @@ import Keyboard
 import AnimationFrame
 import Time exposing (Time)
 import Array
+import Task exposing (perform, succeed, fail)
 
 
 (=>) : a -> b -> ( a, b )
@@ -66,17 +67,10 @@ type alias Paddle =
 
 
 color : Int -> String
-color i =
-    let
-        colors =
-            Array.fromList [ "rgb(92, 199, 42)", "rgb(35, 139, 214)", "rgb(205, 112, 2)" ]
-    in
-        case Array.get (i % (Array.length colors)) colors of
-            Just c ->
-                c
-
-            Nothing ->
-                "rgb(196, 109, 204)"
+color ix =
+    Array.fromList [ "rgb(92, 199, 42)", "rgb(35, 139, 214)", "rgb(205, 112, 2)" ]
+        |> Array.get (ix % 3)
+        |> Maybe.withDefault "red"
 
 
 createRow : Int -> Int -> Int -> List Entity
@@ -92,10 +86,10 @@ createBrick rowNum colNum color =
     { id = Brick (rowNum * 10 + colNum)
     , x = toFloat <| 5 + 5 * colNum + colNum * 40
     , y = toFloat <| 20 * rowNum + 5 + 5 * rowNum
-    , sx = toFloat 40
-    , sy = toFloat 20
-    , vx = toFloat 0
-    , vy = toFloat 0
+    , sx = 40.0
+    , sy = 20.0
+    , vx = 0.0
+    , vy = 0.0
     , color = color
     }
 
@@ -111,8 +105,7 @@ removeBrick entity bricks =
                 _ ->
                     -1
     in
-        bricks
-            |> List.filter (\brick -> brick.id /= Brick id)
+        bricks |> List.filter (\brick -> brick.id /= Brick id)
 
 
 init : ( Model, Cmd Msg )
@@ -128,8 +121,7 @@ init =
             , color = "#ddd"
             }
       , bricks =
-            [2..7]
-                |> List.concatMap (\i -> createRow i i 10)
+            [2..7] |> List.concatMap (\i -> createRow i i 10)
       , ball =
             { id = Ball
             , x = 210
@@ -156,6 +148,8 @@ type Msg
     = KeyUp Keyboard.KeyCode
     | KeyDown Keyboard.KeyCode
     | Update Time
+    | ReportFailure String
+    | ReportSuccess Int
 
 
 checkBounds entity =
@@ -166,8 +160,8 @@ checkBounds entity =
         Ball ->
             if entity.y <= 0 then
                 { entity | y = 0, vy = -entity.vy }
-            else if entity.x >= 430 then
-                { entity | x = 430, vx = -entity.vx }
+            else if entity.x >= (455 - entity.sx) then
+                { entity | x = (455 - entity.sx), vx = -entity.vx }
             else if entity.x <= 0 then
                 { entity | x = 0, vx = -entity.vx }
             else
@@ -216,7 +210,7 @@ handleCollisions model =
                 |> List.filter (colliding ball)
 
         ( cx, cy ) =
-            ( ball.x + 10, ball.y + 10 )
+            ( ball.x + ball.sx / 2, ball.y + ball.sy / 2 )
     in
         if not <| List.isEmpty brickCollisions then
             case List.head brickCollisions of
@@ -289,6 +283,9 @@ updatePaddle msg model =
             Update time ->
                 { model | paddle = checkBounds { paddle | x = paddle.x + paddle.vx } }
 
+            _ ->
+                model
+
 
 updateBall : Msg -> Model -> Model
 updateBall msg model =
@@ -336,25 +333,10 @@ updateBall msg model =
 
 updateAlive : Model -> Model
 updateAlive model =
-    let
-        ball =
-            model.ball
-
-        state =
-            model.state
-    in
-        { model
-            | state =
-                if ball.y > 450 then
-                    Serving
-                else
-                    state
-            , lives =
-                if ball.y > 450 then
-                    model.lives - 1
-                else
-                    model.lives
-        }
+    if model.ball.y > 450 && model.state == InPlay then
+        { model | state = Serving, lives = model.lives - 1 }
+    else
+        model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
