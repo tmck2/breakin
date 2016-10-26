@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html exposing (Html, button, div, text, hr)
 import Html.App as App
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (style, class, id)
 import Html.Events exposing (onClick)
 import Keyboard
 import AnimationFrame
@@ -371,14 +371,13 @@ px val =
 renderEntity : Entity -> Html a
 renderEntity entity =
     div
-        [ style
-            [ "position" => "absolute"
-            , "left" => px entity.x
+        [ class "entity"
+        , style
+            [ "left" => px entity.x
             , "top" => px entity.y
             , "width" => px entity.sx
             , "height" => px entity.sy
             , "background-color" => entity.color
-            , "display" => "inline-block"
             ]
         ]
         []
@@ -386,84 +385,25 @@ renderEntity entity =
 
 renderScore : Int -> Html a
 renderScore score =
-    div
-        [ style
-            [ "color" => "white"
-            , "position" => "absolute"
-            , "font-family" => "Arial Black"
-            , "top" => "5px"
-            , "left" => "10px"
-            , "font-family" => "Orbitron, sans-serif"
-            , "font-size" => "xx-large"
-            ]
-        ]
-        [ text (toString score) ]
+    div [ id "score" ] [ text (toString score) ]
 
 
 renderLives : Int -> Html a
 renderLives num =
     div
-        [ style
-            [ "position" => "absolute"
-            , "left" => "355px"
-            , "top" => "460px"
-            , "width" => "90px"
-            , "height" => "30px"
-            , "display" => "inline-block"
-            ]
-        ]
+        [ id "lives-container" ]
         [ div [ style [] ]
-            (List.map
-                (\n ->
-                    div
-                        [ style
-                            [ "display" => "inline-block"
-                            , "top" => "15px"
-                            , "width" => "20px"
-                            , "height" => "20px"
-                            , "background-color" => "#bbb"
-                            , "margin" => "5px"
-                            ]
-                        ]
-                        []
-                )
-                [1..num]
-            )
+            (List.map (\n -> div [ id "life" ] []) [1..num])
         ]
 
 
 view : Model -> Html Msg
 view model =
     div
-        [ style
-            [ "background-color" => "#eee"
-            , "width" => "100%"
-            , "height" => "100%"
-            ]
-        ]
-        [ div
-            [ style
-                [ "position" => "relative"
-                , "width" => "455px"
-                , "height" => "500px"
-                , "margin" => "auto"
-                , "background-color" => "rgb(47, 36, 55)"
-                ]
-            ]
-            [ renderScore model.score
-            , div [] (List.map renderEntity model.bricks)
-            , div
-                [ style
-                    [ "position" => "absolute"
-                    , "top" => "500px"
-                    ]
-                ]
-                []
-              --[ hr [] []
-              --, text <| toString model
-              --]
-            , renderEntity model.paddle
-            , renderEntity model.ball
-            , renderLives model.lives
-            ]
+        [ id "playing-field" ]
+        [ renderScore model.score
+        , div [] (List.map renderEntity model.bricks)
+        , renderEntity model.paddle
+        , renderEntity model.ball
+        , renderLives model.lives
         ]
