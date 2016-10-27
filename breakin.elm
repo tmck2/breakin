@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Html exposing (Html, button, div, text, hr)
 import Html.App as App
@@ -9,6 +9,9 @@ import AnimationFrame
 import Time exposing (Time)
 import Array
 import Task exposing (perform, succeed, fail)
+
+
+port playSound : String -> Cmd msg
 
 
 (=>) : a -> b -> ( a, b )
@@ -148,8 +151,7 @@ type Msg
     = KeyUp Keyboard.KeyCode
     | KeyDown Keyboard.KeyCode
     | Update Time
-    | ReportFailure String
-    | ReportSuccess Int
+    | PlaySound String
 
 
 checkBounds entity =
@@ -193,7 +195,7 @@ colliding e1 e2 =
         || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
 
 
-handleCollisions : Model -> Model
+handleCollisions : Model -> ( Model, List (Cmd Msg) )
 handleCollisions model =
     let
         ball =
@@ -215,7 +217,7 @@ handleCollisions model =
         if not <| List.isEmpty brickCollisions then
             case List.head brickCollisions of
                 Just brick ->
-                    { model
+                    ( { model
                         | bricks = removeBrick brick bricks
                         , ball =
                             { ball
@@ -231,10 +233,12 @@ handleCollisions model =
                                         ball.vy
                             }
                         , score = model.score + 1
-                    }
+                      }
+                    , [ playSound "bottle_pop_3.wav" ]
+                    )
 
                 Nothing ->
-                    model
+                    ( model, [ Cmd.none ] )
         else if colliding model.ball model.paddle then
             let
                 normalize ( x, y ) =
@@ -256,14 +260,16 @@ handleCollisions model =
                 ( vx, vy ) =
                     normalize ( d * 1 + (1 - d) * 2, d * 2 + (1 - d) * 1 )
             in
-                { model
+                ( { model
                     | ball = { ball | vx = 4 * (sign ball.vx) * vx, vy = -4 * (sign ball.vy) * vy, y = paddle.y - ball.sy }
-                }
+                  }
+                , [ playSound "bottle_pop_3.wav" ]
+                )
         else
-            model
+            ( model, [ Cmd.none ] )
 
 
-updatePaddle : Msg -> Model -> Model
+updatePaddle : Msg -> Model -> ( Model, List (Cmd Msg) )
 updatePaddle msg model =
     let
         paddle =
@@ -272,23 +278,23 @@ updatePaddle msg model =
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    { model | paddle = { paddle | vx = -3 } }
+                    ( { model | paddle = { paddle | vx = -3 } }, [ Cmd.none ] )
                 else if keyCode == 39 then
-                    { model | paddle = { paddle | vx = 3 } }
+                    ( { model | paddle = { paddle | vx = 3 } }, [ Cmd.none ] )
                 else
-                    model
+                    ( model, [ Cmd.none ] )
 
             KeyUp keyCode ->
-                { model | paddle = { paddle | vx = 0 } }
+                ( { model | paddle = { paddle | vx = 0 } }, [ Cmd.none ] )
 
             Update time ->
-                { model | paddle = checkBounds { paddle | x = paddle.x + paddle.vx } }
+                ( { model | paddle = checkBounds { paddle | x = paddle.x + paddle.vx } }, [ Cmd.none ] )
 
             _ ->
-                model
+                ( model, [ Cmd.none ] )
 
 
-updateBall : Msg -> Model -> Model
+updateBall : Msg -> Model -> ( Model, List (Cmd Msg) )
 updateBall msg model =
     let
         ball =
@@ -300,23 +306,25 @@ updateBall msg model =
         case msg of
             KeyUp keyCode ->
                 if keyCode == 17 && model.state == Serving then
-                    { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }
+                    ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
                 else
-                    { model | paddle = { paddle | vx = toFloat 0 } }
+                    ( { model | paddle = { paddle | vx = toFloat 0 } }, [ Cmd.none ] )
 
             Update time ->
                 case model.state of
                     Serving ->
-                        { model
+                        ( { model
                             | ball =
                                 { ball
                                     | x = paddle.x + paddle.sx / 2 - ball.sx / 2
                                     , y = paddle.y - ball.sy
                                 }
-                        }
+                          }
+                        , [ Cmd.none ]
+                        )
 
                     InPlay ->
-                        { model
+                        ( { model
                             | ball =
                                 model.ball
                                     |> (\entity ->
@@ -326,29 +334,44 @@ updateBall msg model =
                                             }
                                        )
                                     |> checkBounds
-                        }
+                          }
+                        , [ Cmd.none ]
+                        )
 
             _ ->
-                model
+                ( model, [ Cmd.none ] )
 
 
-updateAlive : Model -> Model
+updateAlive : Model -> ( Model, List (Cmd Msg) )
 updateAlive model =
     if model.ball.y > 450 && model.state == InPlay then
-        { model | state = Serving, lives = model.lives - 1 }
+        ( { model | state = Serving, lives = model.lives - 1 }, [ Cmd.none ] )
     else
-        model
+        ( model, [ Cmd.none ] )
+
+
+(>>=) update1 update2 model =
+    let
+        ( m1, c1 ) =
+            update1 model
+
+        ( m2, c2 ) =
+            update2 m1
+    in
+        ( m2, List.append c1 c2 )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model
-        |> (updatePaddle msg)
-        |> (updateBall msg)
-        |> handleCollisions
-        |> updateAlive
-    , Cmd.none
-    )
+    let
+        ( updatedModel, cmds ) =
+            model
+                |> (updatePaddle msg)
+                >>= (updateBall msg)
+                >>= handleCollisions
+                >>= updateAlive
+    in
+        ( updatedModel, Cmd.batch cmds )
 
 
 subscriptions model =

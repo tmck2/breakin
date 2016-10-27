@@ -2,19 +2,20 @@
 <head>
 <link rel="stylesheet" type="text/css" href="styles.css" />
 <link href="https://fonts.googleapis.com/css?family=Orbitron:900" rel="stylesheet">
-<style>
-  body {
-    margin: 0;
-    padding: 0;
+<script>
+  function playSound(filename) {
+    var snd = new Audio(filename);
+    snd.play();
   }
-</style>
+</script>
 </head>
 <div id="main"></div>
 <script src="breakin.js"></script>
 <script>
     var node = document.getElementById('main');
     var app = Elm.Main.embed(node);
-    // Note: if your Elm module is named "MyThing.Root" you
-    // would call "Elm.MyThing.Root.embed(node)" instead.
+    app.ports.playSound.subscribe(function (filename) {
+      playSound(filename);
+    });
 </script>
 </html>
