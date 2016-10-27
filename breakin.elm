@@ -14,9 +14,10 @@ import Task exposing (perform, succeed, fail)
 port playSound : String -> Cmd msg
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    (,)
+sounds =
+    { break = "bottle_pop_3.wav"
+    , die = "record-scratch-1.wav"
+    }
 
 
 main =
@@ -234,7 +235,7 @@ handleCollisions model =
                             }
                         , score = model.score + 1
                       }
-                    , [ playSound "bottle_pop_3.wav" ]
+                    , [ playSound sounds.break ]
                     )
 
                 Nothing ->
@@ -263,7 +264,7 @@ handleCollisions model =
                 ( { model
                     | ball = { ball | vx = 4 * (sign ball.vx) * vx, vy = -4 * (sign ball.vy) * vy, y = paddle.y - ball.sy }
                   }
-                , [ playSound "bottle_pop_3.wav" ]
+                , [ playSound sounds.break ]
                 )
         else
             ( model, [ Cmd.none ] )
@@ -345,7 +346,7 @@ updateBall msg model =
 updateAlive : Model -> ( Model, List (Cmd Msg) )
 updateAlive model =
     if model.ball.y > 450 && model.state == InPlay then
-        ( { model | state = Serving, lives = model.lives - 1 }, [ playSound "record-scratch-1.wav" ] )
+        ( { model | state = Serving, lives = model.lives - 1 }, [ playSound sounds.die ] )
     else
         ( model, [ Cmd.none ] )
 
@@ -384,6 +385,11 @@ subscriptions model =
 
 
 -- VIEW
+
+
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
 
 
 px : Float -> String
