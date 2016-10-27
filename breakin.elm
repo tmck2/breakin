@@ -345,7 +345,7 @@ updateBall msg model =
 updateAlive : Model -> ( Model, List (Cmd Msg) )
 updateAlive model =
     if model.ball.y > 450 && model.state == InPlay then
-        ( { model | state = Serving, lives = model.lives - 1 }, [ Cmd.none ] )
+        ( { model | state = Serving, lives = model.lives - 1 }, [ playSound "record-scratch-1.wav" ] )
     else
         ( model, [ Cmd.none ] )
 
