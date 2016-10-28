@@ -39,7 +39,7 @@ init =
             , vy = 0
             , color = "#bbb"
             }
-      , state = Serving
+      , state = Title
       , lives = 3
       , score = 0
       }

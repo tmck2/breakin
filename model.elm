@@ -29,7 +29,8 @@ type alias Model =
 
 
 type State
-    = Serving
+    = Title
+    | Serving
     | InPlay
 
 

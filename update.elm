@@ -52,14 +52,8 @@ colliding e1 e2 =
 handleCollisions : Model -> ( Model, List (Cmd Msg) )
 handleCollisions model =
     let
-        ball =
-            model.ball
-
-        paddle =
-            model.paddle
-
-        bricks =
-            model.bricks
+        { ball, paddle, bricks } =
+            model
 
         brickCollisions =
             bricks
@@ -148,49 +142,58 @@ updatePaddle msg model =
                 ( model, [ Cmd.none ] )
 
 
-updateBall : Msg -> Model -> ( Model, List (Cmd Msg) )
-updateBall msg model =
+updateBallInPlay : Msg -> Model -> ( Model, List (Cmd Msg) )
+updateBallInPlay msg model =
     let
-        ball =
-            model.ball
-
-        paddle =
-            model.paddle
+        { ball, paddle } =
+            model
     in
         case msg of
             KeyUp keyCode ->
-                if keyCode == 17 && model.state == Serving then
-                    ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
-                else
-                    ( { model | paddle = { paddle | vx = toFloat 0 } }, [ Cmd.none ] )
+                ( { model | paddle = { paddle | vx = toFloat 0 } }, [ Cmd.none ] )
 
             Update time ->
-                case model.state of
-                    Serving ->
-                        ( { model
-                            | ball =
-                                { ball
-                                    | x = paddle.x + paddle.sx / 2 - ball.sx / 2
-                                    , y = paddle.y - ball.sy
-                                }
-                          }
-                        , [ Cmd.none ]
-                        )
+                ( { model
+                    | ball =
+                        model.ball
+                            |> (\entity ->
+                                    { entity
+                                        | x = entity.x + entity.vx
+                                        , y = entity.y + entity.vy
+                                    }
+                               )
+                            |> checkBounds
+                  }
+                , [ Cmd.none ]
+                )
 
-                    InPlay ->
-                        ( { model
-                            | ball =
-                                model.ball
-                                    |> (\entity ->
-                                            { entity
-                                                | x = entity.x + entity.vx
-                                                , y = entity.y + entity.vy
-                                            }
-                                       )
-                                    |> checkBounds
-                          }
-                        , [ Cmd.none ]
-                        )
+            _ ->
+                ( model, [ Cmd.none ] )
+
+
+updateBallServing : Msg -> Model -> ( Model, List (Cmd Msg) )
+updateBallServing msg model =
+    let
+        { ball, paddle } =
+            model
+    in
+        case msg of
+            KeyUp keyCode ->
+                if keyCode == 17 then
+                    ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
+                else
+                    ( model, [ Cmd.none ] )
+
+            Update time ->
+                ( { model
+                    | ball =
+                        { ball
+                            | x = paddle.x + paddle.sx / 2 - ball.sx / 2
+                            , y = paddle.y - ball.sy
+                        }
+                  }
+                , [ Cmd.none ]
+                )
 
             _ ->
                 ( model, [ Cmd.none ] )
@@ -215,17 +218,53 @@ updateAlive model =
         ( m2, List.append c1 c2 )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+serving : Msg -> Model -> ( Model, Cmd Msg )
+serving msg model =
     let
         ( updatedModel, cmds ) =
             model
-                |> (updatePaddle msg)
-                >>= (updateBall msg)
+                |> updatePaddle msg
+                >>= updateBallServing msg
                 >>= handleCollisions
                 >>= updateAlive
     in
         ( updatedModel, Cmd.batch cmds )
+
+
+inPlay : Msg -> Model -> ( Model, Cmd Msg )
+inPlay msg model =
+    let
+        ( updatedModel, cmds ) =
+            model
+                |> updatePaddle msg
+                >>= updateBallInPlay msg
+                >>= handleCollisions
+                >>= updateAlive
+    in
+        ( updatedModel, Cmd.batch cmds )
+
+
+title : Msg -> Model -> ( Model, Cmd Msg )
+title msg model =
+    case msg of
+        KeyUp _ ->
+            ( { model | state = Serving }, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case model.state of
+        Title ->
+            title msg model
+
+        Serving ->
+            serving msg model
+
+        InPlay ->
+            inPlay msg model
 
 
 subscriptions model =
