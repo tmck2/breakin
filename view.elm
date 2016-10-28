@@ -45,13 +45,23 @@ renderLives num =
         ]
 
 
+titleView : Model -> Html a
+titleView model =
+    div [] [ text "press any key" ]
+
+
 view : Model -> Html Msg
 view model =
-    div
-        [ id "playing-field" ]
-        [ renderScore model.score
-        , div [] (List.map renderEntity model.bricks)
-        , renderEntity model.paddle
-        , renderEntity model.ball
-        , renderLives model.lives
-        ]
+    case model.state of
+        Title ->
+            titleView model
+
+        _ ->
+            div
+                [ id "playing-field" ]
+                [ renderScore model.score
+                , div [] (List.map renderEntity model.bricks)
+                , renderEntity model.paddle
+                , renderEntity model.ball
+                , renderLives model.lives
+                ]
