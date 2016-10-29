@@ -126,9 +126,9 @@ updatePaddle msg model =
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    ( { model | paddle = { paddle | vx = -3 } }, [ Cmd.none ] )
+                    ( { model | paddle = { paddle | vx = -4 } }, [ Cmd.none ] )
                 else if keyCode == 39 then
-                    ( { model | paddle = { paddle | vx = 3 } }, [ Cmd.none ] )
+                    ( { model | paddle = { paddle | vx = 4 } }, [ Cmd.none ] )
                 else
                     ( model, [ Cmd.none ] )
 
@@ -207,6 +207,11 @@ updateAlive model =
         ( model, [ Cmd.none ] )
 
 
+updateIncrementCounter : Model -> ( Model, List (Cmd Msg) )
+updateIncrementCounter model =
+    ( { model | counter = model.counter + 1 }, [ Cmd.none ] )
+
+
 (>>=) update1 update2 model =
     let
         ( m1, c1 ) =
@@ -218,12 +223,18 @@ updateAlive model =
         ( m2, List.append c1 c2 )
 
 
+paused : Msg -> Model -> ( Model, Cmd Msg )
+paused msg model =
+    ( model, Cmd.none )
+
+
 serving : Msg -> Model -> ( Model, Cmd Msg )
 serving msg model =
     let
         ( updatedModel, cmds ) =
             model
-                |> updatePaddle msg
+                |> updateIncrementCounter
+                >>= updatePaddle msg
                 >>= updateBallServing msg
                 >>= handleCollisions
                 >>= updateAlive
@@ -236,7 +247,8 @@ inPlay msg model =
     let
         ( updatedModel, cmds ) =
             model
-                |> updatePaddle msg
+                |> updateIncrementCounter
+                >>= updatePaddle msg
                 >>= updateBallInPlay msg
                 >>= handleCollisions
                 >>= updateAlive
@@ -265,6 +277,9 @@ update msg model =
 
         InPlay ->
             inPlay msg model
+
+        Paused ->
+            paused msg model
 
 
 subscriptions model =

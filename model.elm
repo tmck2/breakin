@@ -16,10 +16,14 @@ type Msg
     | KeyDown Keyboard.KeyCode
     | Update Time
     | PlaySound String
+    | Pause
+    | Rewind
+    | FastForward
 
 
 type alias Model =
-    { lives : Int
+    { counter : Int
+    , lives : Int
     , score : Int
     , paddle : Paddle
     , bricks : List Entity
@@ -30,6 +34,7 @@ type alias Model =
 
 type State
     = Title
+    | Paused
     | Serving
     | InPlay
 

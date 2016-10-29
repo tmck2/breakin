@@ -17,7 +17,8 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { paddle =
+    ( { counter = 0
+      , paddle =
             { id = Paddle
             , x = 160
             , y = 400
