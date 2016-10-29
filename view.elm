@@ -52,18 +52,20 @@ titleView model =
 
 view : Model -> Html Msg
 view model =
-  case model.state of
-      Title ->
-          titleView model
-    _ -> div []
-        [ div
-            [ id "playing-field" ]
-            [ renderScore model.score
-            , div [] (List.map renderEntity model.bricks)
-            , renderEntity model.paddle
-            , renderEntity model.ball
-            , renderLives model.lives
-            ]
-        , div [ style [ "top" => "500px" ] ]
-            [ hr [] [], div [] [ text (toString model) ] ]
-        ]
+    case model.state of
+        Title ->
+            titleView model
+
+        _ ->
+            div []
+                [ div
+                    [ id "playing-field" ]
+                    [ renderScore model.score
+                    , div [] (List.map renderEntity model.bricks)
+                    , renderEntity model.paddle
+                    , renderEntity model.ball
+                    , renderLives model.lives
+                    ]
+                , div [ style [ "top" => "500px" ] ]
+                    [ hr [] [], div [] [ text (toString model) ] ]
+                ]
