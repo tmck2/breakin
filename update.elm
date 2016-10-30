@@ -3,9 +3,23 @@ port module Update exposing (..)
 import Model exposing (..)
 import AnimationFrame
 import Keyboard
+import Json.Encode exposing (encode)
+import Json.Decode exposing (decodeString)
 
 
 port playSound : String -> Cmd msg
+
+
+port saveState : String -> Cmd msg
+
+
+port rewind : () -> Cmd msg
+
+
+port fastforward : () -> Cmd msg
+
+
+port updateModel : (String -> msg) -> Sub msg
 
 
 checkBounds entity =
@@ -223,9 +237,63 @@ updateIncrementCounter model =
         ( m2, List.append c1 c2 )
 
 
+checkForPause : Msg -> Model -> ( Model, List (Cmd Msg) )
+checkForPause msg model =
+    case msg of
+        KeyUp keycode ->
+            if keycode == 80 then
+                ( { model
+                    | state =
+                        if model.state == Paused then
+                            InPlay
+                        else
+                            Paused
+                  }
+                , [ Cmd.none ]
+                )
+            else
+                ( model, [ Cmd.none ] )
+
+        _ ->
+            ( model, [ Cmd.none ] )
+
+
 paused : Msg -> Model -> ( Model, Cmd Msg )
 paused msg model =
-    ( model, Cmd.none )
+    case msg of
+        KeyUp keycode ->
+            if keycode == 80 then
+                ( { model | state = InPlay }, Cmd.none )
+            else
+                ( model, Cmd.none )
+
+        KeyDown keycode ->
+            if keycode == 82 then
+                ( model, rewind () )
+            else if keycode == 70 then
+                ( model, fastforward () )
+            else
+                ( model, Cmd.none )
+
+        UpdateModel modelJson ->
+            let
+                modelResult =
+                    decodeString decodeModel modelJson
+            in
+                case modelResult of
+                    Ok model ->
+                        ( { model | state = Paused }, Cmd.none )
+
+                    Err msg ->
+                        Debug.crash (Debug.log "" msg)
+
+        _ ->
+            ( model, Cmd.none )
+
+
+updateSaveState : Model -> ( Model, List (Cmd Msg) )
+updateSaveState model =
+    ( model, [ saveState (encode 0 (encodeModel model)) ] )
 
 
 serving : Msg -> Model -> ( Model, Cmd Msg )
@@ -238,6 +306,8 @@ serving msg model =
                 >>= updateBallServing msg
                 >>= handleCollisions
                 >>= updateAlive
+                >>= checkForPause msg
+                >>= updateSaveState
     in
         ( updatedModel, Cmd.batch cmds )
 
@@ -252,6 +322,8 @@ inPlay msg model =
                 >>= updateBallInPlay msg
                 >>= handleCollisions
                 >>= updateAlive
+                >>= checkForPause msg
+                >>= updateSaveState
     in
         ( updatedModel, Cmd.batch cmds )
 
@@ -287,4 +359,5 @@ subscriptions model =
         [ Keyboard.downs KeyDown
         , Keyboard.ups KeyUp
         , AnimationFrame.diffs Update
+        , updateModel UpdateModel
         ]

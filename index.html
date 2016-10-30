@@ -7,6 +7,11 @@
     var snd = new Audio(filename);
     snd.play();
   }
+  ct = 0;
+  states = [];
+  function saveState(state) {
+    states[ct++] = state;
+  }
 </script>
 </head>
 <div id="main"></div>
@@ -16,6 +21,15 @@
     var app = Elm.Main.embed(node);
     app.ports.playSound.subscribe(function (filename) {
       playSound(filename);
+    });
+    app.ports.saveState.subscribe(function (state) {
+      saveState(state);
+    });
+    app.ports.rewind.subscribe(function () {
+      app.ports.updateModel.send(states[--ct]);
+    });
+    app.ports.fastforward.subscribe(function() {
+      app.ports.updateModel.send(states[++ct]);
     });
 </script>
 </html>
