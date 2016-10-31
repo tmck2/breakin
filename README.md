@@ -10,7 +10,6 @@ elm-make breakin.elm --output=breakin.js
 
 ##TODO
 
-- Instructions
 - Levels
 - Game over screen
 - High score
