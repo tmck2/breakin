@@ -16,17 +16,19 @@ px val =
     toString (round val) ++ "px"
 
 
-renderEntity : Entity -> Html a
-renderEntity entity =
+renderEntity : List ( String, String ) -> Entity -> Html a
+renderEntity styles entity =
     div
         [ class "entity"
         , style
-            [ "left" => px entity.x
-            , "top" => px entity.y
-            , "width" => px entity.sx
-            , "height" => px entity.sy
-            , "background-color" => entity.color
-            ]
+            (List.append styles
+                [ "left" => px entity.x
+                , "top" => px entity.y
+                , "width" => px entity.sx
+                , "height" => px entity.sy
+                , "background-color" => entity.color
+                ]
+            )
         ]
         []
 
@@ -61,9 +63,9 @@ view model =
                 [ div
                     [ id "playing-field" ]
                     [ renderScore model.score
-                    , div [] (List.map renderEntity model.bricks)
-                    , renderEntity model.paddle
-                    , renderEntity model.ball
+                    , div [] (List.map (renderEntity []) model.bricks)
+                    , renderEntity [ "border-radius" => px 10 ] model.paddle
+                    , renderEntity [ "border-radius" => px 10 ] model.ball
                     , renderLives model.lives
                     ]
                 , div [ style [ "top" => "500px" ] ]

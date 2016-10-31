@@ -63,70 +63,74 @@ colliding e1 e2 =
         || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
 
 
-handleCollisions : Model -> ( Model, List (Cmd Msg) )
-handleCollisions model =
+brickCollisions : Model -> ( Model, List (Cmd Msg) )
+brickCollisions model =
     let
         { ball, paddle, bricks } =
             model
-
-        brickCollisions =
-            bricks
-                |> List.filter (colliding ball)
-
-        ( cx, cy ) =
-            ( ball.x + ball.sx / 2, ball.y + ball.sy / 2 )
     in
-        if not <| List.isEmpty brickCollisions then
-            case List.head brickCollisions of
-                Just brick ->
+        case List.head <| List.filter (colliding ball) bricks of
+            Just brick ->
+                let
+                    ys =
+                        [ ball.y, ball.y + ball.sy ]
+
+                    ( vx, vy ) =
+                        if
+                            List.all ((<=) (brick.y + brick.sy - 4)) ys
+                                || List.all ((>=) (brick.y + 4)) ys
+                        then
+                            ( ball.vx, -ball.vy )
+                        else
+                            ( -ball.vx, ball.vy )
+                in
                     ( { model
                         | bricks = removeBrick brick bricks
                         , ball =
                             { ball
-                                | vx =
-                                    if cx <= brick.x || cx >= (brick.x + brick.sx) then
-                                        -ball.vx
-                                    else
-                                        ball.vx
-                                , vy =
-                                    if cy <= brick.y || cy >= (brick.y + brick.sy) then
-                                        -ball.vy
-                                    else
-                                        ball.vy
+                                | vx = vx
+                                , vy = vy
                             }
                         , score = model.score + 1
                       }
                     , [ playSound sounds.break ]
                     )
 
-                Nothing ->
-                    ( model, [ Cmd.none ] )
-        else if colliding model.ball model.paddle then
+            Nothing ->
+                ( model, [ Cmd.none ] )
+
+
+paddleCollisions : Model -> ( Model, List (Cmd Msg) )
+paddleCollisions model =
+    let
+        { ball, paddle } =
+            model
+
+        normalize ( x, y ) =
             let
-                normalize ( x, y ) =
-                    let
-                        mag =
-                            sqrt (x * x + y * y)
-                    in
-                        ( x / mag, y / mag )
-
-                d =
-                    sin ((max ((ball.x + ball.sx / 2 - paddle.x) / paddle.sx) 0.0) * pi)
-
-                sign x =
-                    if x >= 0.0 then
-                        1.0
-                    else
-                        -1.0
-
-                ( vx, vy ) =
-                    normalize ( d * 1 + (1 - d) * 2, d * 2 + (1 - d) * 1 )
+                mag =
+                    sqrt (x * x + y * y)
             in
-                ( { model
-                    | ball = { ball | vx = 4 * (sign ball.vx) * vx, vy = -4 * (sign ball.vy) * vy, y = paddle.y - ball.sy }
-                  }
-                , [ playSound sounds.break ]
-                )
+                ( x / mag, y / mag )
+
+        d =
+            sin ((max ((ball.x + ball.sx / 2 - paddle.x) / paddle.sx) 0.0) * pi)
+
+        sign x =
+            if x >= 0.0 then
+                1.0
+            else
+                -1.0
+
+        ( vx, vy ) =
+            normalize ( d * 1 + (1 - d) * 2, d * 2 + (1 - d) * 1 )
+    in
+        if colliding paddle ball && ball.y < paddle.y + 2 then
+            ( { model
+                | ball = { ball | vx = 4 * (sign ball.vx) * vx, vy = -4 * (sign ball.vy) * vy, y = paddle.y - ball.sy }
+              }
+            , [ Cmd.none ]
+            )
         else
             ( model, [ Cmd.none ] )
 
@@ -304,7 +308,6 @@ serving msg model =
                 |> updateIncrementCounter
                 >>= updatePaddle msg
                 >>= updateBallServing msg
-                >>= handleCollisions
                 >>= updateAlive
                 >>= checkForPause msg
                 >>= updateSaveState
@@ -320,7 +323,8 @@ inPlay msg model =
                 |> updateIncrementCounter
                 >>= updatePaddle msg
                 >>= updateBallInPlay msg
-                >>= handleCollisions
+                >>= brickCollisions
+                >>= paddleCollisions
                 >>= updateAlive
                 >>= checkForPause msg
                 >>= updateSaveState

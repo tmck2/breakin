@@ -34,6 +34,7 @@ body {
   height: 20px;
   background-color: #bbb;
   margin: 5px;
+  border-radius: 10px;
 }
 
 .entity {
