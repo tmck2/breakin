@@ -5,6 +5,7 @@ import AnimationFrame
 import Keyboard
 import Json.Encode exposing (encode)
 import Json.Decode exposing (decodeString)
+import Serialization exposing (..)
 
 
 port playSound : String -> Cmd msg
