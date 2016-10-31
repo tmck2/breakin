@@ -58,6 +58,14 @@ titleView model =
         ]
 
 
+renderInstructions : Model -> Html a
+renderInstructions model =
+    if model.state == Serving then
+        div [ id "instructions" ] [ text "Press ctrl to serve" ]
+    else
+        []
+
+
 view : Model -> Html Msg
 view model =
     case model.state of
@@ -73,6 +81,7 @@ view model =
                     , renderEntity [ "border-radius" => px 10 ] model.paddle
                     , renderEntity [ "border-radius" => px 10 ] model.ball
                     , renderLives model.lives
+                    , renderInstructions model
                     ]
                 , div [ style [ "top" => "500px" ] ]
                     [ hr [] [], div [] [ text (toString model) ] ]
