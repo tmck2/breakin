@@ -61,9 +61,9 @@ titleView model =
 renderInstructions : Model -> Html a
 renderInstructions model =
     if model.state == Serving then
-        div [ id "instructions" ] [ text "Press ctrl to serve" ]
+        div [ id "instructions" ] [ text "Ctrl to serve. Left and right to move paddle." ]
     else
-        []
+        div [] []
 
 
 view : Model -> Html Msg

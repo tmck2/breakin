@@ -75,3 +75,13 @@ body {
 #title {
   animation: title_animation 1s ease-in-out infinite;
 }
+
+#instructions {
+  width: 100%;
+  text-align: center;
+  background-color: rgba(255,255,255,0.10);
+  top: 300px;
+  position: absolute;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+}
