@@ -49,3 +49,29 @@ body {
   margin: auto;
   background-color: rgb(47, 36, 55);
 }
+
+#title-container {
+  display: table;
+  width: 455px;
+  height: 500px;
+  margin: auto;
+  background-color: rgb(47, 36, 55);
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+}
+
+@keyframes title_animation {
+	0% { transform: scale(1); }
+	50% { transform: scale(1.05);}
+	100% { transform: scale(1);}
+}
+
+#title-inner-container {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+#title {
+  animation: title_animation 1s ease-in-out infinite;
+}

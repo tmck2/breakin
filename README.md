@@ -10,7 +10,8 @@ elm-make breakin.elm --output=breakin.js
 
 ##TODO
 
-- Intro screen
+- Instructions
+- Levels
 - Game over screen
 - High score
-- Paddle collision is a bit weird (e.g. if the ball collides with the side of the paddle, bounces back to the top)
+- Make the view more friendly to browsers other than Chrome and Safari

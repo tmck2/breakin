@@ -49,7 +49,13 @@ renderLives num =
 
 titleView : Model -> Html a
 titleView model =
-    div [] [ text "press any key" ]
+    div [ id "title-container" ]
+        [ div
+            [ id "title-inner-container" ]
+            [ div [ id "title", style [ "font-size" => "100px" ] ] [ text "Breakin" ]
+            , div [] [ text "Press any key to continue..." ]
+            ]
+        ]
 
 
 view : Model -> Html Msg
