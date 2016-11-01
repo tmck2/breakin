@@ -156,9 +156,9 @@ updatePaddle msg model =
         case msg of
             KeyDown keyCode ->
                 if keyCode == 37 then
-                    ( { model | paddle = { paddle | vx = -4 } }, [ Cmd.none ] )
+                    ( { model | paddle = { paddle | vx = -3.5 } }, [ Cmd.none ] )
                 else if keyCode == 39 then
-                    ( { model | paddle = { paddle | vx = 4 } }, [ Cmd.none ] )
+                    ( { model | paddle = { paddle | vx = 3.5 } }, [ Cmd.none ] )
                 else
                     ( model, [ Cmd.none ] )
 
@@ -405,7 +405,7 @@ gameOver msg model =
             model
     in
         case msg of
-            KeyUp _ ->
+            KeyPress _ ->
                 ( initialModel, Cmd.none )
 
             UpdateHighScore score ->
@@ -438,6 +438,7 @@ subscriptions model =
     Sub.batch
         [ Keyboard.downs KeyDown
         , Keyboard.ups KeyUp
+        , Keyboard.presses KeyPress
         , AnimationFrame.diffs Update
         , updateModel UpdateModel
         , updateHighScore UpdateHighScore

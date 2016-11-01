@@ -97,6 +97,7 @@ sounds =
 type Msg
     = KeyUp Keyboard.KeyCode
     | KeyDown Keyboard.KeyCode
+    | KeyPress Keyboard.KeyCode
     | Update Time
     | Pause
     | UpdateModel String
