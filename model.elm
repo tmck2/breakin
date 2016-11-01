@@ -4,6 +4,66 @@ import String
 import Array
 import Time exposing (Time)
 import Keyboard
+import Levels exposing (..)
+
+
+initialModel =
+    { counter = 0
+    , paddle =
+        { id = Paddle
+        , x = 160
+        , y = 400
+        , sx = 100
+        , sy = 20
+        , vx = 0
+        , vy = 0
+        , color = "#ddd"
+        }
+    , bricks =
+        bricksFromCharMap level1
+    , ball =
+        { id = Ball
+        , x = 210
+        , y = 380
+        , sx = 20
+        , sy = 20
+        , vx = 0
+        , vy = 0
+        , color = "#bbb"
+        }
+    , state = Title
+    , lives = 3
+    , score = 0
+    , level = 0
+    }
+
+
+mapCharToColor ch =
+    case ch of
+        'Y' ->
+            "yellow"
+
+        'R' ->
+            "rgb(230, 52, 116)"
+
+        'W' ->
+            "white"
+
+        'G' ->
+            "rgb(17, 167, 72)"
+
+        _ ->
+            "gray"
+
+
+bricksFromCharMap charMap =
+    (charMap
+        |> List.map2 (,) [0..11]
+        |> List.map (\( row, str ) -> ( row, List.indexedMap (,) (String.toList str) ))
+        |> List.concatMap (\( row, cols ) -> cols |> List.map (\( col, ch ) -> ( row, col, ch )))
+        |> List.filter (\( row, col, ch ) -> ch /= '.')
+        |> List.map (\( row, col, ch ) -> brick row col (mapCharToColor ch))
+    )
 
 
 brick row col color =
@@ -60,6 +120,7 @@ type State
     | Paused
     | Serving
     | InPlay
+    | GameOver
 
 
 type EntityId
