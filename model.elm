@@ -1,8 +1,30 @@
 module Model exposing (..)
 
+import String
 import Array
 import Time exposing (Time)
 import Keyboard
+
+
+brick row col color =
+    { id = Brick (row * 10 + col)
+    , x = toFloat <| 5 + 5 * col + col * 40
+    , y = toFloat <| 20 * row + 5 + 5 * row
+    , sx = 40.0
+    , sy = 20.0
+    , vx = 0.0
+    , vy = 0.0
+    , color = color
+    }
+
+
+brickFromChar char row col =
+    case char of
+        "X" ->
+            Just <| brick row col "yellow"
+
+        _ ->
+            Nothing
 
 
 sounds =
@@ -29,6 +51,7 @@ type alias Model =
     , paddle : Paddle
     , ball : Entity
     , bricks : List Entity
+    , level : Int
     }
 
 

@@ -3,9 +3,11 @@ port module Update exposing (..)
 import Model exposing (..)
 import AnimationFrame
 import Keyboard
+import Array
 import Json.Encode exposing (encode)
 import Json.Decode exposing (decodeString)
 import Serialization exposing (..)
+import Levels exposing (..)
 
 
 port playSound : String -> Cmd msg
@@ -242,6 +244,32 @@ updateIncrementCounter model =
         ( m2, List.append c1 c2 )
 
 
+updateLevel : Model -> ( Model, List (Cmd Msg) )
+updateLevel model =
+    if List.length model.bricks <= 0 then
+        let
+            { paddle } =
+                model
+
+            level =
+                model.level + 1
+
+            bricksForLevel n =
+                case Array.get n levels of
+                    Just bricks ->
+                        bricks
+
+                    Nothing ->
+                        []
+
+            paddleWidth =
+                max 40 (paddle.sx * 0.8)
+        in
+            ( { model | state = Serving, level = level, bricks = bricksForLevel (level % 3), paddle = { paddle | sx = paddleWidth } }, [ Cmd.none ] )
+    else
+        ( model, [ Cmd.none ] )
+
+
 checkForPause : Msg -> Model -> ( Model, List (Cmd Msg) )
 checkForPause msg model =
     case msg of
@@ -327,6 +355,7 @@ inPlay msg model =
                 >>= brickCollisions
                 >>= paddleCollisions
                 >>= updateAlive
+                >>= updateLevel
                 >>= checkForPause msg
                 >>= updateSaveState
     in

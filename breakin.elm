@@ -4,6 +4,7 @@ import Html.App as App
 import View exposing (..)
 import Model exposing (..)
 import Update exposing (..)
+import Levels exposing (..)
 
 
 main =
@@ -29,7 +30,7 @@ init =
             , color = "#ddd"
             }
       , bricks =
-            [2..7] |> List.concatMap (\i -> createRow i i 10)
+            level1
       , ball =
             { id = Ball
             , x = 210
@@ -43,6 +44,7 @@ init =
       , state = Title
       , lives = 3
       , score = 0
+      , level = 0
       }
     , Cmd.none
     )
