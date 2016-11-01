@@ -1,6 +1,6 @@
 module View exposing (..)
 
-import Html exposing (Html, button, div, text, hr)
+import Html exposing (Html, button, div, text, hr, br)
 import Html.Attributes exposing (style, class, id)
 import Html.Events exposing (onClick)
 import Model exposing (..)
@@ -64,6 +64,8 @@ gameOverView model =
         [ div
             [ id "title-inner-container" ]
             [ div [ id "title", style [ "font-size" => "100px" ] ] [ text "Game Over" ]
+            , div [] [ text <| "Score: " ++ (toString model.score) ++ ", Best: " ++ (toString model.highScore) ]
+            , br [] []
             , div [] [ text "Press any key to continue..." ]
             ]
         ]
@@ -97,6 +99,6 @@ view model =
                     , renderLives model.lives
                     , renderInstructions model
                     ]
-                , div [ style [ "top" => "500px" ] ]
-                    [ hr [] [], div [] [ text (toString model) ] ]
+                  --, div [ style [ "top" => "500px" ] ]
+                  --    [ hr [] [], div [] [ text (toString model) ] ]
                 ]

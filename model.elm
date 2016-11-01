@@ -35,6 +35,7 @@ initialModel =
     , lives = 3
     , score = 0
     , level = 0
+    , highScore = 0
     }
 
 
@@ -101,6 +102,7 @@ type Msg
     | UpdateModel String
     | Rewind
     | FastForward
+    | UpdateHighScore Int
 
 
 type alias Model =
@@ -112,6 +114,7 @@ type alias Model =
     , ball : Entity
     , bricks : List Entity
     , level : Int
+    , highScore : Int
     }
 
 

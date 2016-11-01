@@ -10,5 +10,4 @@ elm-make breakin.elm --output=breakin.js
 
 ##TODO
 
-- High score
 - Make the view more friendly to browsers other than Chrome and Safari

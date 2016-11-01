@@ -12,6 +12,18 @@
   function saveState(state) {
     states[ct++] = state;
   }
+  function getHighScore() {
+    if (localStorage.highScore)
+      return +localStorage.highScore;
+    return 0;
+  }
+  function saveScoreIfNewBest(score) {
+    best = getHighScore();
+    if (score > best) {
+      localStorage.highScore = score;
+      app.ports.updateHighScore.send(score);
+    }
+  }
 </script>
 </head>
 <div id="main"></div>
@@ -30,6 +42,13 @@
     });
     app.ports.fastforward.subscribe(function() {
       app.ports.updateModel.send(states[++ct]);
+    });
+    app.ports.saveHighScore.subscribe(function(score) {
+      saveScoreIfNewBest(score);
+    });
+    app.ports.getHighScore.subscribe(function() {
+      score = getHighScore();
+      app.ports.updateHighScore.send(score);
     });
 </script>
 </html>

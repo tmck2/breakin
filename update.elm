@@ -25,6 +25,15 @@ port fastforward : () -> Cmd msg
 port updateModel : (String -> msg) -> Sub msg
 
 
+port saveHighScore : Int -> Cmd msg
+
+
+port getHighScore : () -> Cmd msg
+
+
+port updateHighScore : (Int -> msg) -> Sub msg
+
+
 checkBounds entity =
     case entity.id of
         Paddle ->
@@ -235,7 +244,12 @@ updateAlive model =
                         GameOver
                 , lives = lives
               }
-            , [ playSound sounds.die ]
+            , List.concat
+                [ if lives > 0 then
+                    [ playSound sounds.die ]
+                  else
+                    [ playSound sounds.die, saveHighScore model.score, getHighScore () ]
+                ]
             )
         else
             ( model, [ Cmd.none ] )
@@ -394,6 +408,9 @@ gameOver msg model =
             KeyUp _ ->
                 ( initialModel, Cmd.none )
 
+            UpdateHighScore score ->
+                ( { model | highScore = score }, Cmd.none )
+
             _ ->
                 ( model, Cmd.none )
 
@@ -423,4 +440,5 @@ subscriptions model =
         , Keyboard.ups KeyUp
         , AnimationFrame.diffs Update
         , updateModel UpdateModel
+        , updateHighScore UpdateHighScore
         ]
