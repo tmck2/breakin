@@ -58,6 +58,17 @@ titleView model =
         ]
 
 
+gameOverView : Model -> Html a
+gameOverView model =
+    div [ id "title-container" ]
+        [ div
+            [ id "title-inner-container" ]
+            [ div [ id "title", style [ "font-size" => "100px" ] ] [ text "Game Over" ]
+            , div [] [ text "Press any key to continue..." ]
+            ]
+        ]
+
+
 renderInstructions : Model -> Html a
 renderInstructions model =
     if model.state == Serving then
@@ -71,6 +82,9 @@ view model =
     case model.state of
         Title ->
             titleView model
+
+        GameOver ->
+            gameOverView model
 
         _ ->
             div []

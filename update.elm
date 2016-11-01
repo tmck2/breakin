@@ -222,10 +222,23 @@ updateBallServing msg model =
 
 updateAlive : Model -> ( Model, List (Cmd Msg) )
 updateAlive model =
-    if model.ball.y > 450 && model.state == InPlay then
-        ( { model | state = Serving, lives = model.lives - 1 }, [ playSound sounds.die ] )
-    else
-        ( model, [ Cmd.none ] )
+    let
+        lives =
+            model.lives - 1
+    in
+        if model.ball.y > 450 then
+            ( { model
+                | state =
+                    if lives > 0 then
+                        Serving
+                    else
+                        GameOver
+                , lives = lives
+              }
+            , [ playSound sounds.die ]
+            )
+        else
+            ( model, [ Cmd.none ] )
 
 
 updateIncrementCounter : Model -> ( Model, List (Cmd Msg) )
@@ -257,7 +270,7 @@ updateLevel model =
             bricksForLevel n =
                 case Array.get n levels of
                     Just bricks ->
-                        bricks
+                        bricksFromCharMap bricks
 
                     Nothing ->
                         []
@@ -337,7 +350,6 @@ serving msg model =
                 |> updateIncrementCounter
                 >>= updatePaddle msg
                 >>= updateBallServing msg
-                >>= updateAlive
                 >>= checkForPause msg
                 >>= updateSaveState
     in
@@ -372,6 +384,20 @@ title msg model =
             ( model, Cmd.none )
 
 
+gameOver : Msg -> Model -> ( Model, Cmd Msg )
+gameOver msg model =
+    let
+        { paddle } =
+            model
+    in
+        case msg of
+            KeyUp _ ->
+                ( initialModel, Cmd.none )
+
+            _ ->
+                ( model, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model.state of
@@ -386,6 +412,9 @@ update msg model =
 
         Paused ->
             paused msg model
+
+        GameOver ->
+            gameOver msg model
 
 
 subscriptions model =
