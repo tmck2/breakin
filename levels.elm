@@ -1,6 +1,5 @@
 module Levels exposing (..)
 
-import String
 import Array
 
 

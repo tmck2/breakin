@@ -1,14 +1,14 @@
 module Main exposing (..)
 
-import Html.App as App
-import View exposing (..)
-import Model exposing (..)
-import Update exposing (..)
-import Levels exposing (..)
+import Html.App as App exposing (program)
+import View exposing (view)
+import Model exposing (initialModel, Msg, Model)
+import Update exposing (update, subscriptions)
+import Ports exposing (getHighScore)
 
 
 main =
-    App.program
+    program
         { init = init
         , view = view
         , update = update

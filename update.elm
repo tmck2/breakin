@@ -1,4 +1,4 @@
-port module Update exposing (..)
+module Update exposing (..)
 
 import Model exposing (..)
 import AnimationFrame
@@ -6,73 +6,10 @@ import Keyboard
 import Array
 import Json.Encode exposing (encode)
 import Json.Decode exposing (decodeString)
+import Char exposing (toCode)
 import Serialization exposing (..)
 import Levels exposing (..)
-
-
-port playSound : String -> Cmd msg
-
-
-port saveState : String -> Cmd msg
-
-
-port rewind : () -> Cmd msg
-
-
-port fastforward : () -> Cmd msg
-
-
-port updateModel : (String -> msg) -> Sub msg
-
-
-port saveHighScore : Int -> Cmd msg
-
-
-port getHighScore : () -> Cmd msg
-
-
-port updateHighScore : (Int -> msg) -> Sub msg
-
-
-checkBounds entity =
-    case entity.id of
-        Paddle ->
-            { entity | x = min (max entity.x 0) (455 - entity.sx) }
-
-        Ball ->
-            if entity.y <= 0 then
-                { entity | y = 0, vy = -entity.vy }
-            else if entity.x >= (455 - entity.sx) then
-                { entity | x = (455 - entity.sx), vx = -entity.vx }
-            else if entity.x <= 0 then
-                { entity | x = 0, vx = -entity.vx }
-            else
-                entity
-
-        _ ->
-            entity
-
-
-ptInRectangle ( minx, miny, maxx, maxy ) ( x, y ) =
-    x > minx && x < maxx && y > miny && y < maxy
-
-
-boundingRect entity =
-    ( entity.x, entity.y, entity.x + entity.sx, entity.y + entity.sy )
-
-
-entityVerts e =
-    [ ( e.x, e.y )
-    , ( e.x + e.sx, e.y )
-    , ( e.x + e.sy, e.y + e.sy )
-    , ( e.x, e.y + e.sy )
-    ]
-
-
-colliding : Entity -> Entity -> Bool
-colliding e1 e2 =
-    List.any (ptInRectangle (boundingRect e2)) (entityVerts e1)
-        || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
+import Ports exposing (..)
 
 
 brickCollisions : Model -> ( Model, List (Cmd Msg) )
@@ -152,12 +89,15 @@ updatePaddle msg model =
     let
         paddle =
             model.paddle
+
+        ( leftKey, rightKey ) =
+            ( 37, 39 )
     in
         case msg of
             KeyDown keyCode ->
-                if keyCode == 37 then
+                if keyCode == leftKey then
                     ( { model | paddle = { paddle | vx = -3.5 } }, [ Cmd.none ] )
-                else if keyCode == 39 then
+                else if keyCode == rightKey then
                     ( { model | paddle = { paddle | vx = 3.5 } }, [ Cmd.none ] )
                 else
                     ( model, [ Cmd.none ] )
@@ -166,7 +106,7 @@ updatePaddle msg model =
                 ( { model | paddle = { paddle | vx = 0 } }, [ Cmd.none ] )
 
             Update time ->
-                ( { model | paddle = checkBounds { paddle | x = paddle.x + paddle.vx } }, [ Cmd.none ] )
+                ( { model | paddle = (checkBounds 455) { paddle | x = paddle.x + paddle.vx } }, [ Cmd.none ] )
 
             _ ->
                 ( model, [ Cmd.none ] )
@@ -179,9 +119,6 @@ updateBallInPlay msg model =
             model
     in
         case msg of
-            KeyUp keyCode ->
-                ( { model | paddle = { paddle | vx = toFloat 0 } }, [ Cmd.none ] )
-
             Update time ->
                 ( { model
                     | ball =
@@ -192,7 +129,7 @@ updateBallInPlay msg model =
                                         , y = entity.y + entity.vy
                                     }
                                )
-                            |> checkBounds
+                            |> (checkBounds 455)
                   }
                 , [ Cmd.none ]
                 )
@@ -206,10 +143,13 @@ updateBallServing msg model =
     let
         { ball, paddle } =
             model
+
+        ctrlKey =
+            17
     in
         case msg of
             KeyUp keyCode ->
-                if keyCode == 17 then
+                if keyCode == ctrlKey then
                     ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
                 else
                     ( model, [ Cmd.none ] )
@@ -301,7 +241,7 @@ checkForPause : Msg -> Model -> ( Model, List (Cmd Msg) )
 checkForPause msg model =
     case msg of
         KeyUp keycode ->
-            if keycode == 80 then
+            if keycode == toCode 'P' then
                 ( { model
                     | state =
                         if model.state == Paused then
@@ -322,15 +262,15 @@ paused : Msg -> Model -> ( Model, Cmd Msg )
 paused msg model =
     case msg of
         KeyUp keycode ->
-            if keycode == 80 then
+            if keycode == toCode 'P' then
                 ( { model | state = InPlay }, Cmd.none )
             else
                 ( model, Cmd.none )
 
         KeyDown keycode ->
-            if keycode == 82 then
+            if keycode == toCode 'R' then
                 ( model, rewind () )
-            else if keycode == 70 then
+            else if keycode == toCode 'F' then
                 ( model, fastforward () )
             else
                 ( model, Cmd.none )

@@ -1,7 +1,6 @@
 module Model exposing (..)
 
 import String
-import Array
 import Time exposing (Time)
 import Keyboard
 import Levels exposing (..)
@@ -37,55 +36,6 @@ initialModel =
     , level = 0
     , highScore = 0
     }
-
-
-mapCharToColor ch =
-    case ch of
-        'Y' ->
-            "yellow"
-
-        'R' ->
-            "rgb(230, 52, 116)"
-
-        'W' ->
-            "white"
-
-        'G' ->
-            "rgb(17, 167, 72)"
-
-        _ ->
-            "gray"
-
-
-bricksFromCharMap charMap =
-    (charMap
-        |> List.map2 (,) [0..11]
-        |> List.map (\( row, str ) -> ( row, List.indexedMap (,) (String.toList str) ))
-        |> List.concatMap (\( row, cols ) -> cols |> List.map (\( col, ch ) -> ( row, col, ch )))
-        |> List.filter (\( row, col, ch ) -> ch /= '.')
-        |> List.map (\( row, col, ch ) -> brick row col (mapCharToColor ch))
-    )
-
-
-brick row col color =
-    { id = Brick (row * 10 + col)
-    , x = toFloat <| 5 + 5 * col + col * 40
-    , y = toFloat <| 20 * row + 5 + 5 * row
-    , sx = 40.0
-    , sy = 20.0
-    , vx = 0.0
-    , vy = 0.0
-    , color = color
-    }
-
-
-brickFromChar char row col =
-    case char of
-        "X" ->
-            Just <| brick row col "yellow"
-
-        _ ->
-            Nothing
 
 
 sounds =
@@ -149,26 +99,38 @@ type alias Paddle =
     Entity
 
 
-color : Int -> String
-color ix =
-    Array.fromList [ "rgb(92, 199, 42)", "rgb(35, 139, 214)", "rgb(205, 112, 2)" ]
-        |> Array.get (ix % 3)
-        |> Maybe.withDefault "red"
+mapCharToColor ch =
+    case ch of
+        'Y' ->
+            "yellow"
+
+        'R' ->
+            "rgb(230, 52, 116)"
+
+        'W' ->
+            "white"
+
+        'G' ->
+            "rgb(17, 167, 72)"
+
+        _ ->
+            "gray"
 
 
-createRow : Int -> Int -> Int -> List Entity
-createRow seed rowNum len =
-    if len == 0 then
-        []
-    else
-        (createBrick rowNum (len - 1) (color seed)) :: (createRow (rowNum * seed + len) rowNum (len - 1))
+bricksFromCharMap charMap =
+    (charMap
+        |> List.map2 (,) [0..11]
+        |> List.map (\( row, str ) -> ( row, List.indexedMap (,) (String.toList str) ))
+        |> List.concatMap (\( row, cols ) -> cols |> List.map (\( col, ch ) -> ( row, col, ch )))
+        |> List.filter (\( row, col, ch ) -> ch /= '.')
+        |> List.map (\( row, col, ch ) -> brick row col (mapCharToColor ch))
+    )
 
 
-createBrick : Int -> Int -> String -> Entity
-createBrick rowNum colNum color =
-    { id = Brick (rowNum * 10 + colNum)
-    , x = toFloat <| 5 + 5 * colNum + colNum * 40
-    , y = toFloat <| 20 * rowNum + 5 + 5 * rowNum
+brick row col color =
+    { id = Brick (row * 10 + col)
+    , x = toFloat <| 5 + 5 * col + col * 40
+    , y = toFloat <| 20 * row + 5 + 5 * row
     , sx = 40.0
     , sy = 20.0
     , vx = 0.0
@@ -189,3 +151,43 @@ removeBrick entity bricks =
                     -1
     in
         bricks |> List.filter (\brick -> brick.id /= Brick id)
+
+
+colliding : Entity -> Entity -> Bool
+colliding e1 e2 =
+    let
+        ptInRectangle ( minx, miny, maxx, maxy ) ( x, y ) =
+            x > minx && x < maxx && y > miny && y < maxy
+
+        boundingRect entity =
+            ( entity.x, entity.y, entity.x + entity.sx, entity.y + entity.sy )
+
+        entityVerts e =
+            [ ( e.x, e.y )
+            , ( e.x + e.sx, e.y )
+            , ( e.x + e.sy, e.y + e.sy )
+            , ( e.x, e.y + e.sy )
+            ]
+    in
+        List.any (ptInRectangle (boundingRect e2)) (entityVerts e1)
+            || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
+
+
+checkBounds : Float -> Entity -> Entity
+checkBounds width entity =
+    case entity.id of
+        Paddle ->
+            { entity | x = min (max entity.x 0) (width - entity.sx) }
+
+        Ball ->
+            if entity.y <= 0 then
+                { entity | y = 0, vy = -entity.vy }
+            else if entity.x >= (width - entity.sx) then
+                { entity | x = (width - entity.sx), vx = -entity.vx }
+            else if entity.x <= 0 then
+                { entity | x = 0, vx = -entity.vx }
+            else
+                entity
+
+        _ ->
+            entity

@@ -2,8 +2,8 @@ module Serialization exposing (..)
 
 import Model exposing (..)
 import Json.Decode.Pipeline exposing (required, decode)
-import Json.Encode as Encode exposing (..)
-import Json.Decode as Decode exposing (..)
+import Json.Encode as Encode exposing (object)
+import Json.Decode as Decode exposing (Decoder, decodeValue, value, customDecoder)
 import String exposing (toInt, words, startsWith)
 
 
