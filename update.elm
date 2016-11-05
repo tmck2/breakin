@@ -13,48 +13,41 @@ import Ports exposing (..)
 
 
 brickCollisions : Model -> ( Model, List (Cmd Msg) )
-brickCollisions model =
-    let
-        { ball, paddle, bricks } =
-            model
-    in
-        case List.head <| List.filter (colliding ball) bricks of
-            Just brick ->
-                let
-                    ys =
-                        [ ball.y, ball.y + ball.sy ]
+brickCollisions ({ ball, paddle, bricks } as model) =
+    case List.head <| List.filter (colliding ball) bricks of
+        Just brick ->
+            let
+                ys =
+                    [ ball.y, ball.y + ball.sy ]
 
-                    ( vx, vy ) =
-                        if
-                            List.all ((<=) (brick.y + brick.sy - 4)) ys
-                                || List.all ((>=) (brick.y + 4)) ys
-                        then
-                            ( ball.vx, -ball.vy )
-                        else
-                            ( -ball.vx, ball.vy )
-                in
-                    ( { model
-                        | bricks = removeBrick brick bricks
-                        , ball =
-                            { ball
-                                | vx = vx
-                                , vy = vy
-                            }
-                        , score = model.score + 1
-                      }
-                    , [ playSound sounds.break ]
-                    )
+                ( vx, vy ) =
+                    if
+                        List.all ((<=) (brick.y + brick.sy - 4)) ys
+                            || List.all ((>=) (brick.y + 4)) ys
+                    then
+                        ( ball.vx, -ball.vy )
+                    else
+                        ( -ball.vx, ball.vy )
+            in
+                ( { model
+                    | bricks = removeBrick brick bricks
+                    , ball =
+                        { ball
+                            | vx = vx
+                            , vy = vy
+                        }
+                    , score = model.score + 1
+                  }
+                , [ playSound sounds.break ]
+                )
 
-            Nothing ->
-                ( model, [ Cmd.none ] )
+        Nothing ->
+            ( model, [ Cmd.none ] )
 
 
 paddleCollisions : Model -> ( Model, List (Cmd Msg) )
-paddleCollisions model =
+paddleCollisions ({ ball, paddle } as model) =
     let
-        { ball, paddle } =
-            model
-
         normalize ( x, y ) =
             let
                 mag =
@@ -85,11 +78,8 @@ paddleCollisions model =
 
 
 updatePaddle : Msg -> Model -> ( Model, List (Cmd Msg) )
-updatePaddle msg model =
+updatePaddle msg ({ paddle } as model) =
     let
-        paddle =
-            model.paddle
-
         ( leftKey, rightKey ) =
             ( 37, 39 )
     in
@@ -113,37 +103,30 @@ updatePaddle msg model =
 
 
 updateBallInPlay : Msg -> Model -> ( Model, List (Cmd Msg) )
-updateBallInPlay msg model =
-    let
-        { ball, paddle } =
-            model
-    in
-        case msg of
-            Update time ->
-                ( { model
-                    | ball =
-                        model.ball
-                            |> (\entity ->
-                                    { entity
-                                        | x = entity.x + entity.vx
-                                        , y = entity.y + entity.vy
-                                    }
-                               )
-                            |> (checkBounds 455)
-                  }
-                , [ Cmd.none ]
-                )
+updateBallInPlay msg ({ ball, paddle } as model) =
+    case msg of
+        Update time ->
+            ( { model
+                | ball =
+                    model.ball
+                        |> (\entity ->
+                                { entity
+                                    | x = entity.x + entity.vx
+                                    , y = entity.y + entity.vy
+                                }
+                           )
+                        |> (checkBounds 455)
+              }
+            , [ Cmd.none ]
+            )
 
-            _ ->
-                ( model, [ Cmd.none ] )
+        _ ->
+            ( model, [ Cmd.none ] )
 
 
 updateBallServing : Msg -> Model -> ( Model, List (Cmd Msg) )
-updateBallServing msg model =
+updateBallServing msg ({ ball, paddle } as model) =
     let
-        { ball, paddle } =
-            model
-
         ctrlKey =
             17
     in
@@ -170,29 +153,25 @@ updateBallServing msg model =
 
 
 updateAlive : Model -> ( Model, List (Cmd Msg) )
-updateAlive model =
-    let
-        lives =
-            model.lives - 1
-    in
-        if model.ball.y > 450 then
-            ( { model
-                | state =
-                    if lives > 0 then
-                        Serving
-                    else
-                        GameOver
-                , lives = lives
-              }
-            , List.concat
-                [ if lives > 0 then
-                    [ playSound sounds.die ]
-                  else
-                    [ playSound sounds.die, saveHighScore model.score, getHighScore () ]
-                ]
-            )
-        else
-            ( model, [ Cmd.none ] )
+updateAlive ({ lives } as model) =
+    if model.ball.y > 450 then
+        ( { model
+            | state =
+                if lives > 0 then
+                    Serving
+                else
+                    GameOver
+            , lives = lives - 1
+          }
+        , List.concat
+            [ if lives > 0 then
+                [ playSound sounds.die ]
+              else
+                [ playSound sounds.die, saveHighScore model.score, getHighScore () ]
+            ]
+        )
+    else
+        ( model, [ Cmd.none ] )
 
 
 updateIncrementCounter : Model -> ( Model, List (Cmd Msg) )
@@ -212,27 +191,19 @@ updateIncrementCounter model =
 
 
 updateLevel : Model -> ( Model, List (Cmd Msg) )
-updateLevel model =
+updateLevel ({ paddle, level } as model) =
     if List.length model.bricks <= 0 then
-        let
-            { paddle } =
-                model
-
-            level =
-                model.level + 1
-
-            bricksForLevel n =
-                case Array.get n levels of
-                    Just bricks ->
-                        bricksFromCharMap bricks
-
-                    Nothing ->
-                        []
-
-            paddleWidth =
-                max 40 (paddle.sx * 0.8)
-        in
-            ( { model | state = Serving, level = level, bricks = bricksForLevel (level % 3), paddle = { paddle | sx = paddleWidth } }, [ Cmd.none ] )
+        ( { model
+            | state = Serving
+            , level = level + 1
+            , bricks =
+                bricksFromCharMap <|
+                    Maybe.withDefault [] <|
+                        Array.get ((level + 1) % Array.length levels) levels
+            , paddle = { paddle | sx = max 40 (paddle.sx * 0.8) }
+          }
+        , [ Cmd.none ]
+        )
     else
         ( model, [ Cmd.none ] )
 
@@ -339,20 +310,16 @@ title msg model =
 
 
 gameOver : Msg -> Model -> ( Model, Cmd Msg )
-gameOver msg model =
-    let
-        { paddle } =
-            model
-    in
-        case msg of
-            KeyPress _ ->
-                ( initialModel, Cmd.none )
+gameOver msg ({ paddle } as model) =
+    case msg of
+        KeyPress _ ->
+            ( initialModel, Cmd.none )
 
-            UpdateHighScore score ->
-                ( { model | highScore = score }, Cmd.none )
+        UpdateHighScore score ->
+            ( { model | highScore = score }, Cmd.none )
 
-            _ ->
-                ( model, Cmd.none )
+        _ ->
+            ( model, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

@@ -31,7 +31,7 @@ initialModel =
         , color = "#bbb"
         }
     , state = Title
-    , lives = 3
+    , lives = 2
     , score = 0
     , level = 0
     , highScore = 0
@@ -141,16 +141,7 @@ brick row col color =
 
 removeBrick : Entity -> List Entity -> List Entity
 removeBrick entity bricks =
-    let
-        id =
-            case entity.id of
-                Brick id ->
-                    id
-
-                _ ->
-                    -1
-    in
-        bricks |> List.filter (\brick -> brick.id /= Brick id)
+    bricks |> List.filter (\e -> e.id /= entity.id)
 
 
 colliding : Entity -> Entity -> Bool
