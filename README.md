@@ -4,6 +4,8 @@
 
 I wrote this game as an exercise to learn the Elm language.
 
+Music: http://www.purple-planet.com
+
 ##Build Instructions
 
 elm-make breakin.elm --output=breakin.js

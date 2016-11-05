@@ -3,8 +3,10 @@
 <link rel="stylesheet" type="text/css" href="styles.css" />
 <link href="https://fonts.googleapis.com/css?family=Orbitron:900" rel="stylesheet">
 <script>
-  function playSound(filename) {
+  function playSound(filename, volume, loop) {
     var snd = new Audio(filename);
+    snd.volume = volume;
+    snd.loop = loop;
     snd.play();
   }
   ct = 0;
@@ -31,8 +33,11 @@
 <script>
     var node = document.getElementById('main');
     var app = Elm.Main.embed(node);
-    app.ports.playSound.subscribe(function (filename) {
-      playSound(filename);
+    app.ports.playSound.subscribe(function (params) {
+      var volume = params[0];
+      var loop = params[1];
+      var filename = params[2];
+      playSound(filename, volume, loop);
     });
     app.ports.saveState.subscribe(function (state) {
       saveState(state);

@@ -1,7 +1,7 @@
 port module Ports exposing (..)
 
 
-port playSound : String -> Cmd msg
+port playSound : ( Float, Bool, String ) -> Cmd msg
 
 
 port saveState : String -> Cmd msg

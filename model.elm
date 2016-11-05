@@ -4,6 +4,7 @@ import String
 import Time exposing (Time)
 import Keyboard
 import Levels exposing (..)
+import Array
 
 
 initialModel =
@@ -19,7 +20,7 @@ initialModel =
         , color = "#ddd"
         }
     , bricks =
-        bricksFromCharMap level1
+        bricksFromCharMap <| Maybe.withDefault level1 (Array.get 0 levels)
     , ball =
         { id = Ball
         , x = 210
@@ -41,6 +42,7 @@ initialModel =
 sounds =
     { break = "bottle_pop_3.wav"
     , die = "record-scratch-1.wav"
+    , backgroundMusic = "Hard Trance.mp3"
     }
 
 
@@ -104,7 +106,7 @@ mapCharToColor ch =
         'Y' ->
             "yellow"
 
-        'R' ->
+        'P' ->
             "rgb(230, 52, 116)"
 
         'W' ->
@@ -112,6 +114,9 @@ mapCharToColor ch =
 
         'G' ->
             "rgb(17, 167, 72)"
+
+        'R' ->
+            "rgb(232, 65, 65)"
 
         _ ->
             "gray"
