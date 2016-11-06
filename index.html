@@ -3,8 +3,12 @@
 <link rel="stylesheet" type="text/css" href="styles.css" />
 <link href="https://fonts.googleapis.com/css?family=Orbitron:900" rel="stylesheet">
 <script>
+  sounds = {}
   function playSound(filename, volume, loop) {
-    var snd = new Audio(filename);
+    if (sounds[filename] == undefined)
+      sounds[filename] = new Audio(filename);
+    snd = sounds[filename];
+    snd.currentTime = 0;
     snd.volume = volume;
     snd.loop = loop;
     snd.play();
