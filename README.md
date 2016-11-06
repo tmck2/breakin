@@ -14,4 +14,4 @@ elm-make breakin.elm --output=breakin.js
 
 ##TODO
 
-- Make the view more friendly to browsers other than Chrome and Safari
+- Test with browsers other than Chrome
