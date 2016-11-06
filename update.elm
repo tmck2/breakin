@@ -213,15 +213,7 @@ checkForPause msg model =
     case msg of
         KeyUp keycode ->
             if keycode == toCode 'P' then
-                ( { model
-                    | state =
-                        if model.state == Paused then
-                            InPlay
-                        else
-                            Paused
-                  }
-                , [ Cmd.none ]
-                )
+                ( { model | paused = not model.paused }, [ Cmd.none ] )
             else
                 ( model, [ Cmd.none ] )
 
@@ -234,7 +226,7 @@ paused msg model =
     case msg of
         KeyUp keycode ->
             if keycode == toCode 'P' then
-                ( { model | state = InPlay }, Cmd.none )
+                ( { model | paused = False }, Cmd.none )
             else
                 ( model, Cmd.none )
 
@@ -253,7 +245,7 @@ paused msg model =
             in
                 case modelResult of
                     Ok model ->
-                        ( { model | state = Paused }, Cmd.none )
+                        ( { model | paused = True }, Cmd.none )
 
                     Err msg ->
                         Debug.crash (Debug.log "" msg)
@@ -324,21 +316,21 @@ gameOver msg ({ paddle } as model) =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model.state of
-        Title ->
-            title msg model
+    if model.paused then
+        paused msg model
+    else
+        case model.state of
+            Title ->
+                title msg model
 
-        Serving ->
-            serving msg model
+            Serving ->
+                serving msg model
 
-        InPlay ->
-            inPlay msg model
+            InPlay ->
+                inPlay msg model
 
-        Paused ->
-            paused msg model
-
-        GameOver ->
-            gameOver msg model
+            GameOver ->
+                gameOver msg model
 
 
 subscriptions model =

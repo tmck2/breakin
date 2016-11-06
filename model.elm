@@ -36,6 +36,7 @@ initialModel =
     , score = 0
     , level = 0
     , highScore = 0
+    , paused = False
     }
 
 
@@ -51,10 +52,7 @@ type Msg
     | KeyDown Keyboard.KeyCode
     | KeyPress Keyboard.KeyCode
     | Update Time
-    | Pause
     | UpdateModel String
-    | Rewind
-    | FastForward
     | UpdateHighScore Int
 
 
@@ -68,12 +66,12 @@ type alias Model =
     , bricks : List Entity
     , level : Int
     , highScore : Int
+    , paused : Bool
     }
 
 
 type State
     = Title
-    | Paused
     | Serving
     | InPlay
     | GameOver

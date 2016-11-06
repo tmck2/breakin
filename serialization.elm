@@ -8,7 +8,7 @@ import String exposing (toInt, words, startsWith)
 
 
 encodeModel : Model -> Encode.Value
-encodeModel { counter, lives, score, paddle, bricks, ball, state, level, highScore } =
+encodeModel { counter, lives, score, paddle, bricks, ball, state, level, highScore, paused } =
     object
         [ ( "state", Encode.string (toString state) )
         , ( "counter", Encode.int counter )
@@ -19,6 +19,7 @@ encodeModel { counter, lives, score, paddle, bricks, ball, state, level, highSco
         , ( "bricks", Encode.list (bricks |> List.map encodeEntity) )
         , ( "level", Encode.int level )
         , ( "highScore", Encode.int highScore )
+        , ( "paused", Encode.null )
         ]
 
 
@@ -34,6 +35,7 @@ decodeModel =
         |> required "bricks" (Decode.list decodeEntity)
         |> required "level" Decode.int
         |> required "highScore" Decode.int
+        |> required "paused" (Decode.succeed True)
 
 
 encodeEntity : Entity -> Encode.Value
@@ -72,9 +74,6 @@ decodeState =
                     case state of
                         "Title" ->
                             Ok Title
-
-                        "Paused" ->
-                            Ok Paused
 
                         "Serving" ->
                             Ok Serving

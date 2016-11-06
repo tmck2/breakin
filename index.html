@@ -3,6 +3,46 @@
 <link rel="stylesheet" type="text/css" href="styles.css" />
 <link href="https://fonts.googleapis.com/css?family=Orbitron:900" rel="stylesheet">
 <script>
+  var breakin = breakin || {};
+
+  breakin.history = (function () {
+    max_frames = 4000;
+    current = 0;
+    undoHistory = [];
+
+    function rewind(frames) {
+      if (current - frames < 0) {
+        current = 0;
+      } else {
+        current -= frames;
+      }
+      return undoHistory[current];
+    }
+
+    function fastForward(frames) {
+      if (current + frames >= undoHistory.length) {
+        current = undoHistory.length - 1;
+      } else {
+        current = current + frames;
+      }
+      return undoHistory[current];
+    }
+
+    function saveState(state) {
+      undoHistory[current++] = state;
+      while (current > max_frames) {
+        undoHistory = undoHistory.slice(1);
+        current--;
+      }
+    }
+
+    return {
+      saveState: saveState,
+      rewind: rewind,
+      fastForward: fastForward
+    }
+  })();
+
   sounds = {}
   function playSound(filename, volume, loop) {
     if (sounds[filename] == undefined)
@@ -13,11 +53,7 @@
     snd.loop = loop;
     snd.play();
   }
-  ct = 0;
-  states = [];
-  function saveState(state) {
-    states[ct++] = state;
-  }
+
   function getHighScore() {
     if (localStorage.highScore)
       return +localStorage.highScore;
@@ -44,13 +80,13 @@
       playSound(filename, volume, loop);
     });
     app.ports.saveState.subscribe(function (state) {
-      saveState(state);
+      breakin.history.saveState(state);
     });
     app.ports.rewind.subscribe(function () {
-      app.ports.updateModel.send(states[--ct]);
+      app.ports.updateModel.send(breakin.history.rewind(1));
     });
     app.ports.fastforward.subscribe(function() {
-      app.ports.updateModel.send(states[++ct]);
+      app.ports.updateModel.send(breakin.history.fastForward(1));
     });
     app.ports.saveHighScore.subscribe(function(score) {
       saveScoreIfNewBest(score);
