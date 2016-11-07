@@ -5,6 +5,7 @@ import Time exposing (Time)
 import Keyboard
 import Levels exposing (..)
 import Array
+import Mouse exposing (Position)
 
 
 initialModel =
@@ -54,6 +55,8 @@ type Msg
     | Update Time
     | UpdateModel String
     | UpdateHighScore Int
+    | MouseDown Position
+    | MouseUp Position
 
 
 type alias Model =
