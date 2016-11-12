@@ -23,19 +23,35 @@ keys =
     }
 
 
+center : Entity -> ( Float, Float )
+center ({ x, y, sx, sy } as entity) =
+    (( x + sx / 2, y + sy / 2 ))
+
+
+distance : Entity -> Entity -> Float
+distance entity1 entity2 =
+    let
+        ( p1, p2 ) =
+            ( center entity1, center entity2 )
+
+        ( x, y ) =
+            ( fst p2 - fst p1, snd p2 - snd p1 )
+    in
+        sqrt x * x + y * y
+
+
 brickCollisions : Model -> ( Model, List (Cmd Msg) )
 brickCollisions ({ ball, paddle, bricks } as model) =
-    case List.head <| List.filter (colliding ball) bricks of
+    case List.head <| List.sortBy (distance ball) <| List.filter (colliding ball) bricks of
         Just brick ->
             let
                 ys =
                     [ ball.y, ball.y + ball.sy ]
 
                 ( vx, vy ) =
-                    if
-                        List.all ((<=) (brick.y + brick.sy - 4)) ys
-                            || List.all ((>=) (brick.y + 4)) ys
-                    then
+                    if List.all ((<=) (brick.y + brick.sy - 4)) ys && ball.vy < 0 then
+                        ( ball.vx, -ball.vy )
+                    else if List.all ((>=) (brick.y + 4)) ys && ball.vy > 0 then
                         ( ball.vx, -ball.vy )
                     else
                         ( -ball.vx, ball.vy )
@@ -44,7 +60,9 @@ brickCollisions ({ ball, paddle, bricks } as model) =
                     | bricks = removeBrick brick bricks
                     , ball =
                         { ball
-                            | vx = vx
+                            | x = ball.x - ball.vx * 1.5
+                            , y = ball.y - ball.vy * 1.5
+                            , vx = vx
                             , vy = vy
                         }
                     , score = model.score + 1

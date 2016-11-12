@@ -80,7 +80,7 @@ renderInstructions model =
 
 
 view : Model -> Html Msg
-view model =
+view ({ ball } as model) =
     case model.state of
         Title ->
             titleView model
@@ -100,5 +100,5 @@ view model =
                     , renderInstructions model
                     ]
                   --, div [ style [ "top" => "500px" ] ]
-                  --    [ hr [] [], div [] [ text (toString model) ] ]
+                  --    [ hr [] [], div [] [ text (toString ( ball.x, ball.y, ball.vx, ball.vy )) ] ]
                 ]
