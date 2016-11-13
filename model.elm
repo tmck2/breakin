@@ -6,28 +6,50 @@ import Keyboard
 import Levels exposing (..)
 import Array
 import Mouse exposing (Position)
+import TouchEvents
 
 
-initialModel =
+brickWidth screenWidth =
+    (screenWidth - 55) / 10
+
+
+brickHeight screenHeight =
+    (screenHeight / 25)
+
+
+ballSize screenY =
+    (paddleHeight screenY) * 1.25
+
+
+paddleWidth screenX =
+    (brickWidth screenX) * 2
+
+
+paddleHeight screenY =
+    brickHeight screenY
+
+
+initialModel : ( Float, Float ) -> Model
+initialModel (( screenWidth, screenHeight ) as screenDimensions) =
     { counter = 0
     , paddle =
         { id = Paddle
-        , x = 160
-        , y = 400
-        , sx = 100
-        , sy = 20
+        , x = (screenWidth - (paddleWidth screenWidth)) / 2
+        , y = screenHeight - (paddleHeight screenHeight) * 2
+        , sx = paddleWidth screenWidth
+        , sy = paddleHeight screenHeight
         , vx = 0
         , vy = 0
         , color = "#ddd"
         }
     , bricks =
-        bricksFromCharMap <| Maybe.withDefault level1 (Array.get 0 levels)
+        bricksFromCharMap screenDimensions <| Maybe.withDefault level1 (Array.get 0 levels)
     , ball =
         { id = Ball
         , x = 210
         , y = 380
-        , sx = 20
-        , sy = 20
+        , sx = ballSize screenHeight
+        , sy = ballSize screenHeight
         , vx = 0
         , vy = 0
         , color = "#bbb"
@@ -38,7 +60,13 @@ initialModel =
     , level = 0
     , highScore = 0
     , paused = False
+    , screenWidth = screenWidth
+    , screenHeight = screenHeight
     }
+
+
+defaultScreenDimensions =
+    ( 667, 375 )
 
 
 sounds =
@@ -55,8 +83,8 @@ type Msg
     | Update Time
     | UpdateModel String
     | UpdateHighScore Int
-    | MouseDown Position
-    | MouseUp Position
+    | MouseDown TouchEvents.Touch
+    | MouseUp TouchEvents.Touch
 
 
 type alias Model =
@@ -70,6 +98,8 @@ type alias Model =
     , level : Int
     , highScore : Int
     , paused : Bool
+    , screenWidth : Float
+    , screenHeight : Float
     }
 
 
@@ -123,22 +153,23 @@ mapCharToColor ch =
             "gray"
 
 
-bricksFromCharMap charMap =
+bricksFromCharMap screenDimensions charMap =
     (charMap
         |> List.map2 (,) [0..11]
         |> List.map (\( row, str ) -> ( row, List.indexedMap (,) (String.toList str) ))
         |> List.concatMap (\( row, cols ) -> cols |> List.map (\( col, ch ) -> ( row, col, ch )))
         |> List.filter (\( row, col, ch ) -> ch /= '.')
-        |> List.map (\( row, col, ch ) -> brick row col (mapCharToColor ch))
+        |> List.map (\( row, col, ch ) -> brick screenDimensions row col (mapCharToColor ch))
     )
 
 
-brick row col color =
+brick : ( Float, Float ) -> Int -> Int -> String -> Entity
+brick (( screenX, screenY ) as screenDimensions) row col color =
     { id = Brick (row * 10 + col)
-    , x = toFloat <| 5 + 5 * col + col * 40
-    , y = toFloat <| 20 * row + 5 + 5 * row
-    , sx = 40.0
-    , sy = 20.0
+    , x = toFloat <| 5 + 5 * col + col * (round <| brickWidth screenX)
+    , y = toFloat <| (round <| brickHeight screenY) * row + 5 + 5 * row
+    , sx = brickWidth screenX
+    , sy = brickHeight screenY
     , vx = 0.0
     , vy = 0.0
     , color = color
@@ -170,17 +201,17 @@ colliding e1 e2 =
             || List.any (ptInRectangle (boundingRect e1)) (entityVerts e2)
 
 
-checkBounds : Float -> Entity -> Entity
-checkBounds width entity =
+checkBounds : ( Float, Float ) -> Entity -> Entity
+checkBounds ( screenX, screenY ) entity =
     case entity.id of
         Paddle ->
-            { entity | x = min (max entity.x 0) (width - entity.sx) }
+            { entity | x = min (max entity.x 0) (screenX - entity.sx) }
 
         Ball ->
             if entity.y <= 0 then
                 { entity | y = 0, vy = -entity.vy }
-            else if entity.x >= (width - entity.sx) then
-                { entity | x = (width - entity.sx), vx = -entity.vx }
+            else if entity.x >= (screenX - entity.sx) then
+                { entity | vx = -entity.vx }
             else if entity.x <= 0 then
                 { entity | x = 0, vx = -entity.vx }
             else

@@ -8,18 +8,20 @@ import String exposing (toInt, words, startsWith)
 
 
 encodeModel : Model -> Encode.Value
-encodeModel { counter, lives, score, paddle, bricks, ball, state, level, highScore, paused } =
+encodeModel model =
     object
-        [ ( "state", Encode.string (toString state) )
-        , ( "counter", Encode.int counter )
-        , ( "lives", Encode.int lives )
-        , ( "score", Encode.int score )
-        , ( "paddle", encodeEntity paddle )
-        , ( "ball", encodeEntity ball )
-        , ( "bricks", Encode.list (bricks |> List.map encodeEntity) )
-        , ( "level", Encode.int level )
-        , ( "highScore", Encode.int highScore )
+        [ ( "state", Encode.string (toString model.state) )
+        , ( "counter", Encode.int model.counter )
+        , ( "lives", Encode.int model.lives )
+        , ( "score", Encode.int model.score )
+        , ( "paddle", encodeEntity model.paddle )
+        , ( "ball", encodeEntity model.ball )
+        , ( "bricks", Encode.list (model.bricks |> List.map encodeEntity) )
+        , ( "level", Encode.int model.level )
+        , ( "highScore", Encode.int model.highScore )
         , ( "paused", Encode.null )
+        , ( "screenWidth", Encode.float model.screenWidth )
+        , ( "screenHeight", Encode.float model.screenHeight )
         ]
 
 
@@ -36,6 +38,8 @@ decodeModel =
         |> required "level" Decode.int
         |> required "highScore" Decode.int
         |> required "paused" (Decode.succeed True)
+        |> required "screenWidth" Decode.float
+        |> required "screenHeight" Decode.float
 
 
 encodeEntity : Entity -> Encode.Value

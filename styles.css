@@ -19,22 +19,16 @@ body {
 }
 
 #lives-container {
-  position: absolute;
-  left: 355px;
-  top: 460px;
-  width: 90px;
-  height: 30px;
+  position: relative;
   display: inline-block;
 }
 
-#life {
+.life {
   display: inline-block;
   top: 15px;
-  width: 20px;
-  height: 20px;
   background-color: #bbb;
   margin: 5px;
-  border-radius: 10px;
+  border-radius: 100px;
 }
 
 .entity {
@@ -44,16 +38,12 @@ body {
 
 #playing-field {
   position: relative;
-  width: 455px;
-  height: 500px;
   margin: auto;
   background-color: rgb(47, 36, 55);
 }
 
 #title-container {
   display: table;
-  width: 455px;
-  height: 500px;
   margin: auto;
   background-color: rgb(47, 36, 55);
   color: white;
@@ -80,7 +70,6 @@ body {
   width: 100%;
   text-align: center;
   background-color: rgba(255,255,255,0.10);
-  top: 300px;
   position: absolute;
   color: white;
   font-family: 'Orbitron', sans-serif;

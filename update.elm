@@ -11,6 +11,7 @@ import Char
 import Serialization exposing (..)
 import Levels exposing (..)
 import Ports exposing (..)
+import TouchEvents
 
 
 keys =
@@ -109,8 +110,8 @@ paddleCollisions ({ ball, paddle } as model) =
 updatePaddle : Msg -> Model -> ( Model, List (Cmd Msg) )
 updatePaddle msg ({ paddle } as model) =
     case msg of
-        MouseDown { x, y } ->
-            if x < 650 then
+        MouseDown ({ clientX, clientY } as touch) ->
+            if clientX < model.screenWidth / 2 then
                 ( { model | paddle = { paddle | vx = -3.5 } }, [ Cmd.none ] )
             else
                 ( { model | paddle = { paddle | vx = 3.5 } }, [ Cmd.none ] )
@@ -130,7 +131,7 @@ updatePaddle msg ({ paddle } as model) =
             ( { model | paddle = { paddle | vx = 0 } }, [ Cmd.none ] )
 
         Update time ->
-            ( { model | paddle = (checkBounds 455) { paddle | x = paddle.x + paddle.vx } }, [ Cmd.none ] )
+            ( { model | paddle = (checkBounds ( model.screenWidth, model.screenHeight )) { paddle | x = paddle.x + paddle.vx } }, [ Cmd.none ] )
 
         _ ->
             ( model, [ Cmd.none ] )
@@ -149,7 +150,7 @@ updateBallInPlay msg ({ ball, paddle } as model) =
                                     , y = entity.y + entity.vy
                                 }
                            )
-                        |> (checkBounds 455)
+                        |> (checkBounds ( model.screenWidth, model.screenHeight ))
               }
             , [ Cmd.none ]
             )
@@ -161,6 +162,12 @@ updateBallInPlay msg ({ ball, paddle } as model) =
 updateBallServing : Msg -> Model -> ( Model, List (Cmd Msg) )
 updateBallServing msg ({ ball, paddle } as model) =
     case msg of
+        MouseUp { clientX, clientY } ->
+            if (clientY < (model.screenHeight - model.screenHeight / 4)) then
+                ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
+            else
+                ( model, [ Cmd.none ] )
+
         KeyUp keyCode ->
             if keyCode == keys.control then
                 ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
@@ -184,7 +191,7 @@ updateBallServing msg ({ ball, paddle } as model) =
 
 updateAlive : Model -> ( Model, List (Cmd Msg) )
 updateAlive ({ lives } as model) =
-    if model.ball.y > 450 then
+    if model.ball.y > model.screenHeight then
         ( { model
             | state =
                 if lives > 0 then
@@ -227,7 +234,7 @@ updateLevel ({ paddle, level } as model) =
             | state = Serving
             , level = level + 1
             , bricks =
-                bricksFromCharMap <|
+                bricksFromCharMap ( model.screenWidth, model.screenHeight ) <|
                     Maybe.withDefault [] <|
                         Array.get ((level + 1) % Array.length levels) levels
             , paddle = { paddle | sx = max 40 (paddle.sx * 0.8) }
@@ -324,8 +331,13 @@ inPlay msg model =
 title : Msg -> Model -> ( Model, Cmd Msg )
 title msg model =
     case msg of
+        MouseUp _ ->
+            --( { model | state = Serving }, playSound ( 0.25, True, sounds.backgroundMusic ) )
+            ( { model | state = Serving }, Cmd.none )
+
         KeyUp _ ->
-            ( { model | state = Serving }, playSound ( 0.25, True, sounds.backgroundMusic ) )
+            --( { model | state = Serving }, playSound ( 0.25, True, sounds.backgroundMusic ) )
+            ( { model | state = Serving }, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
@@ -334,8 +346,11 @@ title msg model =
 gameOver : Msg -> Model -> ( Model, Cmd Msg )
 gameOver msg ({ paddle } as model) =
     case msg of
+        MouseUp _ ->
+            ( initialModel defaultScreenDimensions, Cmd.none )
+
         KeyPress _ ->
-            ( initialModel, Cmd.none )
+            ( initialModel defaultScreenDimensions, Cmd.none )
 
         UpdateHighScore score ->
             ( { model | highScore = score }, Cmd.none )
@@ -365,9 +380,7 @@ update msg model =
 
 subscriptions model =
     Sub.batch
-        [ Mouse.downs MouseDown
-        , Mouse.ups MouseUp
-        , Keyboard.downs KeyDown
+        [ Keyboard.downs KeyDown
         , Keyboard.ups KeyUp
         , Keyboard.presses KeyPress
         , AnimationFrame.diffs Update

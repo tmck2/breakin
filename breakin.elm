@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html.App as App exposing (program)
 import View exposing (view)
-import Model exposing (initialModel, Msg, Model)
+import Model exposing (initialModel, Msg, Model, defaultScreenDimensions)
 import Update exposing (update, subscriptions)
 import Ports exposing (getHighScore)
 
@@ -18,4 +18,4 @@ main =
 
 init : ( Model, Cmd Msg )
 init =
-    ( initialModel, getHighScore () )
+    ( initialModel defaultScreenDimensions, getHighScore () )
