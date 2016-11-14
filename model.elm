@@ -70,9 +70,9 @@ defaultScreenDimensions =
 
 
 sounds =
-    { break = "bottle_pop_3.wav"
-    , die = "record-scratch-1.wav"
-    , backgroundMusic = "Hard Trance.mp3"
+    { break = "sounds/bottle_pop_3.wav"
+    , die = "sounds/record-scratch-1.wav"
+    , backgroundMusic = "sounds/Hard Trance.mp3"
     }
 
 

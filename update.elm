@@ -68,7 +68,7 @@ brickCollisions ({ ball, paddle, bricks } as model) =
                         }
                     , score = model.score + 1
                   }
-                , [ playSound ( 1, False, sounds.break ) ]
+                , [ playSound ( 0.8, False, sounds.break ) ]
                 )
 
         Nothing ->
@@ -202,9 +202,9 @@ updateAlive ({ lives } as model) =
           }
         , List.concat
             [ if lives > 0 then
-                [ playSound ( 1, False, sounds.die ) ]
+                [ playSound ( 0.5, False, sounds.die ) ]
               else
-                [ playSound ( 1, False, sounds.die ), saveHighScore model.score, getHighScore () ]
+                [ playSound ( 0.5, False, sounds.die ), saveHighScore model.score, getHighScore () ]
             ]
         )
     else
@@ -332,12 +332,10 @@ title : Msg -> Model -> ( Model, Cmd Msg )
 title msg model =
     case msg of
         MouseUp _ ->
-            --( { model | state = Serving }, playSound ( 0.25, True, sounds.backgroundMusic ) )
-            ( { model | state = Serving }, Cmd.none )
+            ( { model | state = Serving }, playSound ( 0.2, True, sounds.backgroundMusic ) )
 
         KeyUp _ ->
-            --( { model | state = Serving }, playSound ( 0.25, True, sounds.backgroundMusic ) )
-            ( { model | state = Serving }, Cmd.none )
+            ( { model | state = Serving }, playSound ( 0.2, True, sounds.backgroundMusic ) )
 
         _ ->
             ( model, Cmd.none )
