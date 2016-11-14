@@ -44,8 +44,10 @@ var SoundApi = (function() {
 
   function Sound(context, buffer)
   {
+    var self = this;
+    
     function play(volume, loop) {
-      var source = context.createBufferSource();
+      var source = self.source = context.createBufferSource();
       source.buffer = buffer;
 
       // looping
@@ -60,8 +62,14 @@ var SoundApi = (function() {
       source.start(0);
     }
 
+    function stop() {
+      if (self.source)
+        self.source.stop();
+    }
+
     return {
-      play: play
+      play: play,
+      stop: stop
     }
   }
 
@@ -131,7 +139,7 @@ app.ports.playSound.subscribe(function (params) {
   var filename = params[2];
   SoundApi.init()
     .then(function(context) { return SoundApi.loadSound(context, filename); })
-    .then(function(snd) { snd.play(volume, loop); })
+    .then(function(snd) { snd.stop(); snd.play(volume, loop); })
 });
 app.ports.saveState.subscribe(function (state) {
   breakin.history.saveState(state);

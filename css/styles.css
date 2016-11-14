@@ -20,7 +20,7 @@ body {
 #score {
   color: white;
   position: absolute;
-  top: 5px;
+  top: 15px;
   left: 10px;
   font-family: 'Orbitron', sans-serif;
   font-size: xx-large;
@@ -29,6 +29,7 @@ body {
 #lives-container {
   position: relative;
   display: inline-block;
+  top: 15px;
 }
 
 .life {
