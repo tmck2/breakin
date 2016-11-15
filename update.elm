@@ -163,7 +163,12 @@ updateBallServing : Msg -> Model -> ( Model, List (Cmd Msg) )
 updateBallServing msg ({ ball, paddle } as model) =
     case msg of
         MouseUp { clientX, clientY } ->
-            if (clientY < (model.screenHeight - model.screenHeight / 4)) then
+            if
+                ((clientY < (model.screenHeight - model.screenHeight / 4))
+                    && (clientX > 100)
+                    && (clientX < model.screenWidth - 100)
+                )
+            then
                 ( { model | state = InPlay, ball = { ball | vx = toFloat 3, vy = toFloat -3 } }, [ Cmd.none ] )
             else
                 ( model, [ Cmd.none ] )
