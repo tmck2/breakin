@@ -83,8 +83,8 @@ type Msg
     | Update Time
     | UpdateModel String
     | UpdateHighScore Int
-    | MouseDown TouchEvents.Touch
-    | MouseUp TouchEvents.Touch
+    | TouchDown TouchEvents.Touch
+    | TouchUp TouchEvents.Touch
 
 
 type alias Model =

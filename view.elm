@@ -71,8 +71,8 @@ titleView model =
             [ "width" => px model.screenWidth
             , "height" => px model.screenHeight
             ]
-        , TouchEvents.onTouchStart MouseDown
-        , TouchEvents.onTouchEnd MouseUp
+        , TouchEvents.onTouchStart TouchDown
+        , TouchEvents.onTouchEnd TouchUp
         ]
         [ div
             [ id "title-inner-container" ]
@@ -90,8 +90,8 @@ gameOverView model =
             [ "width" => px model.screenWidth
             , "height" => px model.screenHeight
             ]
-        , TouchEvents.onTouchStart MouseDown
-        , TouchEvents.onTouchEnd MouseUp
+        , TouchEvents.onTouchStart TouchDown
+        , TouchEvents.onTouchEnd TouchUp
         ]
         [ div
             [ id "title-inner-container" ]
@@ -126,8 +126,8 @@ view ({ ball } as model) =
 
         _ ->
             div
-                [ TouchEvents.onTouchStart MouseDown
-                , TouchEvents.onTouchEnd MouseUp
+                [ TouchEvents.onTouchStart TouchDown
+                , TouchEvents.onTouchEnd TouchUp
                 ]
                 [ div
                     [ id "playing-field"

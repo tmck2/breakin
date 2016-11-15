@@ -110,13 +110,13 @@ paddleCollisions ({ ball, paddle } as model) =
 updatePaddle : Msg -> Model -> ( Model, List (Cmd Msg) )
 updatePaddle msg ({ paddle } as model) =
     case msg of
-        MouseDown ({ clientX, clientY } as touch) ->
+        TouchDown ({ clientX, clientY } as touch) ->
             if clientX < model.screenWidth / 2 then
                 ( { model | paddle = { paddle | vx = -3.5 } }, [ Cmd.none ] )
             else
                 ( { model | paddle = { paddle | vx = 3.5 } }, [ Cmd.none ] )
 
-        MouseUp _ ->
+        TouchUp _ ->
             ( { model | paddle = { paddle | vx = 0 } }, [ Cmd.none ] )
 
         KeyDown keyCode ->
@@ -162,7 +162,7 @@ updateBallInPlay msg ({ ball, paddle } as model) =
 updateBallServing : Msg -> Model -> ( Model, List (Cmd Msg) )
 updateBallServing msg ({ ball, paddle } as model) =
     case msg of
-        MouseUp { clientX, clientY } ->
+        TouchUp { clientX, clientY } ->
             if
                 ((clientY < (model.screenHeight - model.screenHeight / 4))
                     && (clientX > 100)
@@ -336,7 +336,7 @@ inPlay msg model =
 title : Msg -> Model -> ( Model, Cmd Msg )
 title msg model =
     case msg of
-        MouseUp _ ->
+        TouchUp _ ->
             ( { model | state = Serving }, playSound ( 0.2, True, sounds.backgroundMusic ) )
 
         KeyUp _ ->
@@ -349,7 +349,7 @@ title msg model =
 gameOver : Msg -> Model -> ( Model, Cmd Msg )
 gameOver msg ({ paddle } as model) =
     case msg of
-        MouseUp _ ->
+        TouchUp _ ->
             ( initialModel defaultScreenDimensions, Cmd.none )
 
         KeyPress _ ->
