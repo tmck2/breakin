@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html.App as App exposing (program)
+import Html exposing (program)
 import View exposing (view)
 import Model exposing (initialModel, Msg, Model, defaultScreenDimensions)
 import Update exposing (update, subscriptions)

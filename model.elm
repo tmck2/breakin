@@ -81,7 +81,6 @@ type Msg
     | KeyDown Keyboard.KeyCode
     | KeyPress Keyboard.KeyCode
     | Update Time
-    | UpdateModel String
     | UpdateHighScore Int
     | TouchDown TouchEvents.Touch
     | TouchUp TouchEvents.Touch
@@ -155,7 +154,7 @@ mapCharToColor ch =
 
 bricksFromCharMap screenDimensions charMap =
     (charMap
-        |> List.map2 (,) [0..11]
+        |> List.map2 (,) (List.range 0 11)
         |> List.map (\( row, str ) -> ( row, List.indexedMap (,) (String.toList str) ))
         |> List.concatMap (\( row, cols ) -> cols |> List.map (\( col, ch ) -> ( row, col, ch )))
         |> List.filter (\( row, col, ch ) -> ch /= '.')

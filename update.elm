@@ -11,6 +11,7 @@ import Char
 import Serialization exposing (..)
 import Levels exposing (..)
 import Ports exposing (..)
+import Tuple exposing (first, second)
 import TouchEvents
 
 
@@ -36,7 +37,7 @@ distance entity1 entity2 =
             ( center entity1, center entity2 )
 
         ( x, y ) =
-            ( fst p2 - fst p1, snd p2 - snd p1 )
+            ( first p2 - first p1, second p2 - second p1 )
     in
         sqrt x * x + y * y
 
@@ -272,26 +273,6 @@ paused msg model =
             else
                 ( model, Cmd.none )
 
-        KeyDown keycode ->
-            if keycode == keys.r then
-                ( model, rewind () )
-            else if keycode == keys.f then
-                ( model, fastforward () )
-            else
-                ( model, Cmd.none )
-
-        UpdateModel modelJson ->
-            let
-                modelResult =
-                    decodeString decodeModel modelJson
-            in
-                case modelResult of
-                    Ok model ->
-                        ( { model | paused = True }, Cmd.none )
-
-                    Err msg ->
-                        Debug.crash msg
-
         _ ->
             ( model, Cmd.none )
 
@@ -387,6 +368,5 @@ subscriptions model =
         , Keyboard.ups KeyUp
         , Keyboard.presses KeyPress
         , AnimationFrame.diffs Update
-        , updateModel UpdateModel
         , updateHighScore UpdateHighScore
         ]

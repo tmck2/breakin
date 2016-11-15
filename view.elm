@@ -58,7 +58,7 @@ renderLives { lives, screenWidth, screenHeight } =
                         ]
                         []
                 )
-                [1..lives]
+                (List.range 1 lives) 
             )
         ]
 

@@ -3,7 +3,7 @@ module Serialization exposing (..)
 import Model exposing (..)
 import Json.Decode.Pipeline exposing (required, decode)
 import Json.Encode as Encode exposing (object)
-import Json.Decode as Decode exposing (Decoder, decodeValue, value, customDecoder)
+import Json.Decode as Decode exposing (Decoder, decodeValue, value, map)
 import String exposing (toInt, words, startsWith)
 
 
@@ -71,53 +71,45 @@ decodeEntity =
 
 decodeState : Decoder State
 decodeState =
-    customDecoder value
+    map
         (\val ->
-            case decodeValue Decode.string val of
-                Ok state ->
-                    case state of
-                        "Title" ->
-                            Ok Title
+            case val of
+                "Title" ->
+                    Title
 
-                        "Serving" ->
-                            Ok Serving
+                "Serving" ->
+                    Serving
 
-                        "InPlay" ->
-                            Ok InPlay
-
-                        _ ->
-                            Result.Err "invalid value in state"
+                "InPlay" ->
+                    InPlay
 
                 _ ->
-                    Result.Err "invalid value in state"
+                    Debug.crash "decoded invalid state"
         )
+        Decode.string
 
 
 decodeEntityId : Decoder EntityId
 decodeEntityId =
-    customDecoder value
+    map
         (\val ->
-            case decodeValue Decode.string val of
-                Ok id ->
-                    if startsWith "Brick" id then
-                        case words id of
-                            _ :: numStr :: _ ->
-                                case toInt numStr of
-                                    Ok num ->
-                                        Ok (Brick num)
-
-                                    _ ->
-                                        Result.Err "unexpected value specified for brick id"
+            if startsWith "Brick" val then
+                case words val of
+                    _ :: numStr :: _ ->
+                        case (toInt numStr) of
+                            Ok num ->
+                                Brick num
 
                             _ ->
-                                Result.Err "unexpected value specified for brick id"
-                    else if id == "Paddle" then
-                        Ok Paddle
-                    else if id == "Ball" then
-                        Ok Ball
-                    else
-                        Result.Err "unexpected value specified for entity id"
+                                Debug.crash "unexpected value specified for brick id"
 
-                _ ->
-                    Result.Err "unexpected value specified for entity"
+                    _ ->
+                        Debug.crash "unexpected value specified for brick id"
+            else if val == "Paddle" then
+                Paddle
+            else if val == "Ball" then
+                Ball
+            else
+                Debug.crash "unexpected value specified for entity id"
         )
+        Decode.string

@@ -1,43 +1,3 @@
-var breakin = breakin || {};
-
-breakin.history = (function () {
-  max_frames = 4000;
-  current = 0;
-  undoHistory = [];
-
-  function rewind(frames) {
-    if (current - frames < 0) {
-      current = 0;
-    } else {
-      current -= frames;
-    }
-    return undoHistory[current];
-  }
-
-  function fastForward(frames) {
-    if (current + frames >= undoHistory.length) {
-      current = undoHistory.length - 1;
-    } else {
-      current = current + frames;
-    }
-    return undoHistory[current];
-  }
-
-  function saveState(state) {
-    undoHistory[current++] = state;
-    while (current > max_frames) {
-      undoHistory = undoHistory.slice(1);
-      current--;
-    }
-  }
-
-  return {
-    saveState: saveState,
-    rewind: rewind,
-    fastForward: fastForward
-  }
-})();
-
 var SoundApi = (function() {
   var context;
   var snds = [];
@@ -45,7 +5,7 @@ var SoundApi = (function() {
   function Sound(context, buffer)
   {
     var self = this;
-    
+
     function play(volume, loop) {
       var source = self.source = context.createBufferSource();
       source.buffer = buffer;
@@ -123,6 +83,7 @@ function getHighScore() {
     return +localStorage.highScore;
   return 0;
 }
+
 function saveScoreIfNewBest(score) {
   best = getHighScore();
   if (score > best) {
@@ -140,15 +101,6 @@ app.ports.playSound.subscribe(function (params) {
   SoundApi.init()
     .then(function(context) { return SoundApi.loadSound(context, filename); })
     .then(function(snd) { snd.stop(); snd.play(volume, loop); })
-});
-app.ports.saveState.subscribe(function (state) {
-  breakin.history.saveState(state);
-});
-app.ports.rewind.subscribe(function () {
-  app.ports.updateModel.send(breakin.history.rewind(1));
-});
-app.ports.fastforward.subscribe(function() {
-  app.ports.updateModel.send(breakin.history.fastForward(1));
 });
 app.ports.saveHighScore.subscribe(function(score) {
   saveScoreIfNewBest(score);
