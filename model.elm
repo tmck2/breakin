@@ -148,6 +148,9 @@ mapCharToColor ch =
         'R' ->
             "rgb(232, 65, 65)"
 
+        'B' ->
+            "rgb(50, 207, 235)"
+
         _ ->
             "gray"
 

@@ -48,5 +48,20 @@ level3 =
     ]
 
 
+level4 =
+    [ ".........."
+    , ".........."
+    , "...BBBB..."
+    , "..BBBBBB.."
+    , ".BB.BB.BB."
+    , ".BB.BB.BB."
+    , ".BBBBBBBB."
+    , ".BBBBBBBB."
+    , ".BB.BB.BB."
+    , ".........."
+    , ".........."
+    ]
+
+
 levels =
-    Array.fromList [ level1, level2, level3 ]
+    Array.fromList [ level1, level2, level3, level4 ]
